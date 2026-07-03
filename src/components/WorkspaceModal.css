@@ -1,0 +1,74 @@
+.modal-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.workspace-modal {
+  width: min(100%, 460px);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--menu-shadow);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 21px;
+}
+
+.modal-header button {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.workspace-modal form {
+  display: grid;
+  gap: 10px;
+}
+
+.workspace-modal label {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.workspace-modal input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--page-background);
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.workspace-modal input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 18px;
+}

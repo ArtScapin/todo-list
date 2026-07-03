@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../services/api/auth'
 import { ApiError } from '../services/api/api'
 import { saveToken } from '../services/auth-storage'
+import '../styles/auth.css'
 
 type Feedback = {
   message: string
@@ -31,7 +32,7 @@ export function LoginPage() {
       }
 
       saveToken(data.token)
-      navigate('/dashboard', { replace: true })
+      navigate('/workspaces', { replace: true })
     } catch (error) {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined
 
