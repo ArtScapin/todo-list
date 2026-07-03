@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
-import { getToken } from './services/auth'
+import { getToken } from './services/auth-storage'
 import './App.css'
 
 function ProtectedRoute() {

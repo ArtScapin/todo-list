@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { removeToken } from '../services/auth'
+import { removeToken } from '../services/auth-storage'
 
 export function DashboardPage() {
   const navigate = useNavigate()

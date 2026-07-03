@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ApiError } from '../services/api'
-import { register } from '../services/auth'
+import { register } from '../services/api/auth'
+import { ApiError } from '../services/api/api'
 
 export function RegisterPage() {
   const navigate = useNavigate()

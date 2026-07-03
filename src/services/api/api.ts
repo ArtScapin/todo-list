@@ -1,3 +1,5 @@
+import { getToken, removeToken } from '../auth-storage'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export class ApiError extends Error {
@@ -12,13 +14,21 @@ export class ApiError extends Error {
 
 export async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   try {
+    const token = getToken()
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options?.headers,
       },
     })
+
+    if (response.status === 401 && path !== '/login') {
+      removeToken()
+      window.location.assign('/login')
+      throw new ApiError('Sessão expirada.', response.status)
+    }
 
     if (!response.ok) {
       throw new ApiError('A API recusou a requisição.', response.status)

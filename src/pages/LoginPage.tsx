@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { login, saveToken } from '../services/auth'
-import { ApiError } from '../services/api'
+import { login } from '../services/api/auth'
+import { ApiError } from '../services/api/api'
+import { saveToken } from '../services/auth-storage'
 
 type Feedback = {
   message: string
