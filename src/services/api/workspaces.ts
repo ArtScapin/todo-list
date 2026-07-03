@@ -9,6 +9,10 @@ export function getWorkspaces(signal?: AbortSignal) {
   return apiRequest<Workspace[]>('/workspace', { signal })
 }
 
+export function getWorkspace(id: number, signal?: AbortSignal) {
+  return apiRequest<Workspace>(`/workspace/${id}`, { signal })
+}
+
 export function createWorkspace(name: string) {
   return apiRequest<Workspace>('/workspace', {
     method: 'POST',

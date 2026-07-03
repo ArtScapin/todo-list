@@ -1,0 +1,113 @@
+.workspace-back {
+  display: inline-flex;
+  align-items: center;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.workspace-back svg {
+  width: 0;
+  height: 16px;
+  margin-right: 0;
+  opacity: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transform: translateX(6px);
+  transition: width 0.18s, margin-right 0.18s, opacity 0.18s, transform 0.18s;
+}
+
+.workspace-back:hover svg,
+.workspace-back:focus-visible svg {
+  width: 16px;
+  margin-right: 6px;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.lists-heading {
+  min-width: 0;
+}
+
+.lists-heading-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.lists-heading h1 {
+  margin: 3px 0 5px;
+  color: var(--text-primary);
+  font-size: clamp(28px, 4vw, 38px);
+  letter-spacing: -1px;
+}
+
+.lists-heading > p:last-child {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.lists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.list-card {
+  min-height: 140px;
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-top: 4px solid #2563eb;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s;
+}
+
+.list-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.list-card h2 {
+  margin: 0 0 5px;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.list-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+
+.back-action {
+  display: inline-flex;
+  margin-top: 18px;
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .lists-heading-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lists-heading-row .primary-button {
+    width: 100%;
+  }
+}

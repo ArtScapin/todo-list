@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { WorkspaceModal } from '../components/WorkspaceModal'
 import { ApiError } from '../services/api/api'
@@ -132,11 +133,11 @@ export function WorkspacesPage() {
         {!isLoading && !loadError && filteredWorkspaces.length > 0 ? (
           <section className="workspace-grid" aria-label="Lista de workspaces">
             {filteredWorkspaces.map((workspace) => (
-              <article className="workspace-card" key={workspace.id}>
+              <Link className="workspace-card" key={workspace.id} to={`/workspaces/${workspace.id}/lists`}>
                 <span className="workspace-icon" aria-hidden="true">W</span>
                 <h2>{workspace.name}</h2>
                 <p>Workspace</p>
-              </article>
+              </Link>
             ))}
           </section>
         ) : null}

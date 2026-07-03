@@ -72,3 +72,45 @@
   gap: 10px;
   margin-top: 18px;
 }
+
+.color-label {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.color-palette {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 0 4px;
+}
+
+.workspace-modal .color-option {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--border-color);
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+
+.workspace-modal .color-option:hover {
+  transform: translateY(-2px);
+}
+
+.workspace-modal .color-option.selected {
+  box-shadow: 0 0 0 2px var(--text-primary);
+}
+
+.color-option span {
+  font-size: 15px;
+  font-weight: 800;
+}
