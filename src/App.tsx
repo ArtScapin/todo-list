@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { WorkspacesPage } from './pages/WorkspacesPage'
 import { ListsPage } from './pages/ListsPage'
+import { ItemsPage } from './pages/ItemsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { getToken } from './services/auth-storage'
@@ -22,6 +23,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/workspaces/:workspaceId/lists" element={<ListsPage />} />
+          <Route path="/workspaces/:workspaceId/lists/:listId" element={<ItemsPage />} />
         </Route>
         <Route
           path="*"

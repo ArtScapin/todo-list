@@ -149,9 +149,10 @@ export function ListsPage() {
         {!isLoading && !pageError && filteredLists.length > 0 ? (
           <section className="lists-grid" aria-label="Listas do workspace">
             {filteredLists.map((list) => (
-              <article
+              <Link
                 className="list-card"
                 key={list.id}
+                to={`/workspaces/${parsedWorkspaceId}/lists/${list.id}`}
                 style={{ borderTopColor: list.color || '#2563eb' }}
               >
                 <header className="list-card-header">
@@ -160,7 +161,7 @@ export function ListsPage() {
                     <p>{list.status ? 'Concluída' : 'Pendente'}</p>
                   </div>
                 </header>
-              </article>
+              </Link>
             ))}
           </section>
         ) : null}

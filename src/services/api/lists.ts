@@ -12,6 +12,10 @@ export function getLists(workspaceId: number, signal?: AbortSignal) {
   return apiRequest<KanbanList[]>(`/list/all/${workspaceId}`, { signal })
 }
 
+export function getList(id: number, signal?: AbortSignal) {
+  return apiRequest<KanbanList>(`/list/${id}`, { signal })
+}
+
 type CreateListData = {
   name: string
   color: string

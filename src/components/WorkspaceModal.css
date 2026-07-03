@@ -50,7 +50,9 @@
   font-weight: 650;
 }
 
-.workspace-modal input {
+.workspace-modal input,
+.workspace-modal textarea,
+.workspace-modal select {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--border-color);
@@ -59,9 +61,12 @@
   color: var(--text-primary);
   font: inherit;
   outline: none;
+  resize: vertical;
 }
 
-.workspace-modal input:focus {
+.workspace-modal input:focus,
+.workspace-modal textarea:focus,
+.workspace-modal select:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
@@ -113,4 +118,11 @@
 .color-option span {
   font-size: 15px;
   font-weight: 800;
+}
+
+.confirm-modal p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
 }
