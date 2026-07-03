@@ -9,6 +9,7 @@ import {
   type Workspace,
 } from '../services/api/workspaces'
 import { removeToken } from '../services/auth-storage'
+import { getCurrentUser } from '../services/api/users'
 import '../styles/workspaces.css'
 
 const THEME_KEY = 'todo-list:theme'
@@ -16,6 +17,7 @@ const THEME_KEY = 'todo-list:theme'
 export function WorkspacesPage() {
   const navigate = useNavigate()
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [userName, setUserName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -63,6 +65,24 @@ export function WorkspacesPage() {
     }
 
     void loadInitialWorkspaces()
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadCurrentUser() {
+      try {
+        const user = await getCurrentUser(controller.signal)
+        setUserName(user.name)
+      } catch {
+        if (!controller.signal.aborted) {
+          setUserName('Usuário')
+        }
+      }
+    }
+
+    void loadCurrentUser()
     return () => controller.abort()
   }, [])
 
@@ -117,6 +137,7 @@ export function WorkspacesPage() {
     <div className="workspaces-page">
       <Toolbar
         isDarkTheme={isDarkTheme}
+        userName={userName}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         onThemeChange={handleThemeChange}

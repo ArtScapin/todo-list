@@ -144,6 +144,41 @@
   box-shadow: var(--menu-shadow);
 }
 
+.menu-profile {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 12px 8px 15px;
+  text-align: center;
+}
+
+.menu-avatar {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.menu-profile strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-separator {
+  height: 1px;
+  background: var(--border-color);
+}
+
 .theme-option {
   display: flex;
   align-items: center;

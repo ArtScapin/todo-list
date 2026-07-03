@@ -3,6 +3,7 @@ import './Toolbar.css'
 
 type ToolbarProps = {
   isDarkTheme: boolean
+  userName: string
   searchValue: string
   onSearchChange: (value: string) => void
   onThemeChange: () => void
@@ -11,6 +12,7 @@ type ToolbarProps = {
 
 export function Toolbar({
   isDarkTheme,
+  userName,
   searchValue,
   onSearchChange,
   onThemeChange,
@@ -20,6 +22,10 @@ export function Toolbar({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const nameParts = userName.trim().split(/\s+/).filter(Boolean)
+  const initials = nameParts.length > 1
+    ? `${nameParts[0][0]}${nameParts.at(-1)?.[0]}`
+    : nameParts[0]?.slice(0, 2) || 'US'
 
   useEffect(() => {
     function closeMenu(event: MouseEvent) {
@@ -103,6 +109,13 @@ export function Toolbar({
 
             {isMenuOpen ? (
             <div className="menu-panel">
+              <div className="menu-profile">
+                <span className="menu-avatar" aria-hidden="true">
+                  {initials.toLocaleUpperCase()}
+                </span>
+                <strong>{userName || 'Usuário'}</strong>
+              </div>
+              <div className="menu-separator" />
               <div className="theme-option">
                 <span>Tema</span>
                 <button
