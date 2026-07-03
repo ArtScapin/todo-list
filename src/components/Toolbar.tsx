@@ -5,6 +5,8 @@ type ToolbarProps = {
   isDarkTheme: boolean
   userName: string
   searchValue: string
+  searchLabel: string
+  searchPlaceholder: string
   onSearchChange: (value: string) => void
   onThemeChange: () => void
   onLogout: () => void
@@ -14,6 +16,8 @@ export function Toolbar({
   isDarkTheme,
   userName,
   searchValue,
+  searchLabel,
+  searchPlaceholder,
   onSearchChange,
   onThemeChange,
   onLogout,
@@ -67,8 +71,8 @@ export function Toolbar({
               <input
                 ref={searchInputRef}
                 type="search"
-                aria-label="Buscar workspaces"
-                placeholder="Buscar workspace..."
+                aria-label={searchLabel}
+                placeholder={searchPlaceholder}
                 value={searchValue}
                 onChange={(event) => onSearchChange(event.target.value)}
                 onKeyDown={(event) => {
@@ -82,7 +86,7 @@ export function Toolbar({
             <button
               className="search-button"
               type="button"
-              aria-label={isSearchOpen ? 'Fechar busca' : 'Buscar workspaces'}
+              aria-label={isSearchOpen ? 'Fechar busca' : searchLabel}
               onClick={() => {
                 if (isSearchOpen) {
                   onSearchChange('')

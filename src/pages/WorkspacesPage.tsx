@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Toolbar } from '../components/Toolbar'
+import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { WorkspaceModal } from '../components/WorkspaceModal'
 import { ApiError } from '../services/api/api'
 import {
@@ -8,25 +7,15 @@ import {
   getWorkspaces,
   type Workspace,
 } from '../services/api/workspaces'
-import { removeToken } from '../services/auth-storage'
-import { getCurrentUser } from '../services/api/users'
-import '../styles/workspaces.css'
-
-const THEME_KEY = 'todo-list:theme'
 
 export function WorkspacesPage() {
-  const navigate = useNavigate()
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [userName, setUserName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [searchValue, setSearchValue] = useState('')
-  const [isDarkTheme, setIsDarkTheme] = useState(
-    () => localStorage.getItem(THEME_KEY) === 'dark',
-  )
 
   const loadWorkspaces = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true)
@@ -68,42 +57,6 @@ export function WorkspacesPage() {
     return () => controller.abort()
   }, [])
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadCurrentUser() {
-      try {
-        const user = await getCurrentUser(controller.signal)
-        setUserName(user.name)
-      } catch {
-        if (!controller.signal.aborted) {
-          setUserName('Usuário')
-        }
-      }
-    }
-
-    void loadCurrentUser()
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = isDarkTheme ? 'dark' : 'light'
-    localStorage.setItem(THEME_KEY, isDarkTheme ? 'dark' : 'light')
-
-    return () => {
-      delete document.documentElement.dataset.theme
-    }
-  }, [isDarkTheme])
-
-  function handleLogout() {
-    removeToken()
-    navigate('/login', { replace: true })
-  }
-
-  function handleThemeChange() {
-    setIsDarkTheme((current) => !current)
-  }
-
   const closeModal = useCallback(() => {
     setIsModalOpen(false)
     setSaveError(null)
@@ -134,16 +87,12 @@ export function WorkspacesPage() {
   )
 
   return (
-    <div className="workspaces-page">
-      <Toolbar
-        isDarkTheme={isDarkTheme}
-        userName={userName}
+    <AuthenticatedLayout
         searchValue={searchValue}
+        searchLabel="Buscar workspaces"
+        searchPlaceholder="Buscar workspace..."
         onSearchChange={setSearchValue}
-        onThemeChange={handleThemeChange}
-        onLogout={handleLogout}
-      />
-
+    >
       <main className="workspaces-content">
         <div className="workspaces-heading">
           <div>
@@ -202,6 +151,6 @@ export function WorkspacesPage() {
           onSubmit={handleCreateWorkspace}
         />
       ) : null}
-    </div>
+    </AuthenticatedLayout>
   )
 }
