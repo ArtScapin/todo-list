@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { getToken } from './services/auth'
 import './App.css'
 
@@ -16,6 +17,7 @@ function App() {
           path="/login"
           element={getToken() ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<ProtectedRoute />} />
         <Route
           path="*"

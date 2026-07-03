@@ -24,7 +24,8 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
       throw new ApiError('A API recusou a requisição.', response.status)
     }
 
-    return (await response.json()) as T
+    const content = await response.text()
+    return content ? (JSON.parse(content) as T) : (undefined as T)
   } catch (error) {
     if (error instanceof ApiError) {
       throw error

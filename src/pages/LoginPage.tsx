@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { login, saveToken } from '../services/auth'
 import { ApiError } from '../services/api'
 
@@ -87,6 +87,10 @@ export function LoginPage() {
           <button type="submit" disabled={isLoading}>
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
+
+          <p className="form-navigation">
+            Ainda não possui uma conta? <Link to="/register">Cadastre-se</Link>
+          </p>
         </form>
       </section>
     </main>

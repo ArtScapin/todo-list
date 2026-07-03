@@ -141,6 +141,23 @@
   color: #b91c1c;
 }
 
+.form-navigation {
+  margin: 8px 0 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.form-navigation a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.form-navigation a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .login-card {
     padding: 30px 24px;
