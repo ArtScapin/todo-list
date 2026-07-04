@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ListModal } from '../components/ListModal'
+import { PageLoader } from '../components/PageLoader'
 import { ApiError } from '../services/api/api'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
@@ -148,6 +149,21 @@ export function ListsPage() {
     }
   }
 
+  if (isLoading && isValidWorkspaceId) {
+    return (
+      <AuthenticatedLayout
+        searchValue={searchValue}
+        searchLabel="Buscar listas"
+        searchPlaceholder="Buscar lista..."
+        onSearchChange={setSearchValue}
+      >
+        <main className="workspaces-content">
+          <PageLoader label="Carregando workspace..." />
+        </main>
+      </AuthenticatedLayout>
+    )
+  }
+
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
@@ -164,7 +180,7 @@ export function ListsPage() {
               </svg>
               Workspace
             </Link>
-            {isEditingWorkspaceName ? (
+            {workspace && isEditingWorkspaceName ? (
               <input
                 className="workspace-title-input"
                 value={workspaceName}
@@ -177,20 +193,19 @@ export function ListsPage() {
                 disabled={isSavingWorkspaceName}
                 autoFocus
               />
-            ) : (
+            ) : workspace ? (
               <button
                 className="workspace-title"
                 type="button"
-                disabled={!workspace}
                 onClick={() => setIsEditingWorkspaceName(true)}
               >
-                <h1>{workspace?.name ?? 'Listas'}</h1>
+                <h1>{workspace.name}</h1>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
                 </svg>
               </button>
-            )}
+            ) : null}
             <p>Listas deste workspace</p>
             {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
@@ -203,8 +218,6 @@ export function ListsPage() {
             + Nova lista
           </button>
         </div>
-
-        {isLoading && isValidWorkspaceId ? <div className="state-card">Carregando listas...</div> : null}
 
         {(!isLoading || !isValidWorkspaceId) && pageError ? (
           <div className="state-card error-state">

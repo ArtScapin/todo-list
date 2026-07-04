@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { ItemModal } from '../components/ItemModal'
+import { PageLoader } from '../components/PageLoader'
 import { ApiError } from '../services/api/api'
 import {
   changeItemStatus,
@@ -223,6 +224,21 @@ export function ItemsPage() {
     }
   }
 
+  if (isLoading && hasValidIds) {
+    return (
+      <AuthenticatedLayout
+        searchValue={searchValue}
+        searchLabel="Buscar itens"
+        searchPlaceholder="Buscar item..."
+        onSearchChange={setSearchValue}
+      >
+        <main className="workspaces-content">
+          <PageLoader label="Carregando lista..." />
+        </main>
+      </AuthenticatedLayout>
+    )
+  }
+
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
@@ -244,7 +260,7 @@ export function ItemsPage() {
               </svg>
               {workspace?.name ?? 'Listas'}
             </Link>
-            {isEditingListName ? (
+            {list && isEditingListName ? (
               <input
                 className="list-title-input"
                 value={listName}
@@ -257,20 +273,19 @@ export function ItemsPage() {
                 disabled={isSavingListName}
                 autoFocus
               />
-            ) : (
+            ) : list ? (
               <button
                 className="list-title"
                 type="button"
-                disabled={!list}
                 onClick={() => setIsEditingListName(true)}
               >
-                <h1>{list?.name ?? 'Lista'}</h1>
+                <h1>{list.name}</h1>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
                 </svg>
               </button>
-            )}
+            ) : null}
             <p>
               {pendingItemsCount} {pendingItemsCount === 1 ? 'item pendente' : 'itens pendentes'}
             </p>
@@ -280,8 +295,6 @@ export function ItemsPage() {
             + Novo item
           </button>
         </div>
-
-        {isLoading && hasValidIds ? <div className="state-card">Carregando itens...</div> : null}
 
         {(!isLoading || !hasValidIds) && pageError ? (
           <div className="state-card error-state"><p>{pageError}</p></div>

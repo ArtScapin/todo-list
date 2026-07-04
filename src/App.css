@@ -62,3 +62,34 @@
   background: #fef2f2;
   color: #b91c1c;
 }
+
+.page-loader {
+  position: fixed;
+  z-index: 10;
+  inset: 68px 0 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: var(--page-background, #f6f8fb);
+  color: var(--text-secondary, #64748b);
+}
+
+.page-loader span {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border-color, #e2e8f0);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: page-loader-spin 0.75s linear infinite;
+}
+
+.page-loader p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+@keyframes page-loader-spin {
+  to { transform: rotate(360deg); }
+}
