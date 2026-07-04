@@ -16,16 +16,23 @@ export function getList(id: number, signal?: AbortSignal) {
   return apiRequest<KanbanList>(`/list/${id}`, { signal })
 }
 
-type CreateListData = {
+type ListData = {
   name: string
   color: string
   status: boolean
   position: number
 }
 
-export function createList(workspaceId: number, data: CreateListData) {
+export function createList(workspaceId: number, data: ListData) {
   return apiRequest<KanbanList>(`/list/${workspaceId}`, {
     method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateList(id: number, data: ListData) {
+  return apiRequest<KanbanList>(`/list/${id}`, {
+    method: 'PUT',
     body: JSON.stringify(data),
   })
 }

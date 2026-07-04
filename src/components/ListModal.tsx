@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import type { KanbanList } from '../services/api/lists'
 import './WorkspaceModal.css'
 
 const LIST_COLORS = [
@@ -13,15 +14,16 @@ const LIST_COLORS = [
 ]
 
 type ListModalProps = {
+  list?: KanbanList | null
   isSaving: boolean
   errorMessage: string | null
   onClose: () => void
   onSubmit: (name: string, color: string) => Promise<void>
 }
 
-export function ListModal({ isSaving, errorMessage, onClose, onSubmit }: ListModalProps) {
-  const [name, setName] = useState('')
-  const [color, setColor] = useState('#2563eb')
+export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: ListModalProps) {
+  const [name, setName] = useState(list?.name ?? '')
+  const [color, setColor] = useState(list?.color ?? '#2563eb')
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -49,7 +51,7 @@ export function ListModal({ isSaving, errorMessage, onClose, onSubmit }: ListMod
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 id="list-modal-title">Nova lista</h2>
+          <h2 id="list-modal-title">{list ? 'Editar lista' : 'Nova lista'}</h2>
           <button type="button" aria-label="Fechar modal" onClick={onClose}>×</button>
         </div>
 
@@ -90,7 +92,7 @@ export function ListModal({ isSaving, errorMessage, onClose, onSubmit }: ListMod
               Cancelar
             </button>
             <button className="primary-button" type="submit" disabled={isSaving || !name.trim()}>
-              {isSaving ? 'Criando...' : 'Criar lista'}
+              {isSaving ? 'Salvando...' : list ? 'Salvar lista' : 'Criar lista'}
             </button>
           </div>
         </form>

@@ -64,6 +64,7 @@
 }
 
 .list-card {
+  position: relative;
   min-height: 140px;
   padding: 18px;
   border: 1px solid var(--border-color);
@@ -71,7 +72,6 @@
   border-radius: 16px;
   background: var(--surface);
   box-shadow: 0 5px 20px rgba(15, 23, 42, 0.04);
-  text-decoration: none;
   transition: border-color 0.2s, transform 0.2s;
 }
 
@@ -85,6 +85,44 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.list-card-link {
+  display: block;
+  min-height: 100px;
+  padding-right: 38px;
+  text-decoration: none;
+}
+
+.list-edit-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.list-edit-button:hover {
+  background: var(--page-background);
+  color: var(--text-primary);
+}
+
+.list-edit-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .list-card h2 {
