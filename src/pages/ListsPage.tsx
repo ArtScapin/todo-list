@@ -4,7 +4,7 @@ import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ListModal } from '../components/ListModal'
 import { ApiError } from '../services/api/api'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
-import { getWorkspace, type Workspace } from '../services/api/workspaces'
+import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/lists.css'
 
 export function ListsPage() {
@@ -20,6 +20,10 @@ export function ListsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [editingList, setEditingList] = useState<KanbanList | null>(null)
+  const [isEditingWorkspaceName, setIsEditingWorkspaceName] = useState(false)
+  const [workspaceName, setWorkspaceName] = useState('')
+  const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false)
+  const [workspaceNameError, setWorkspaceNameError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isValidWorkspaceId) {
@@ -35,6 +39,7 @@ export function ListsPage() {
           getLists(parsedWorkspaceId, controller.signal),
         ])
         setWorkspace(workspaceData)
+        setWorkspaceName(workspaceData.name)
         setLists(listsData.sort((first, second) => first.position - second.position))
       } catch {
         if (!controller.signal.aborted) {
@@ -116,6 +121,33 @@ export function ListsPage() {
     }
   }
 
+  async function handleWorkspaceNameSave() {
+    if (!workspace || isSavingWorkspaceName) return
+
+    const normalizedName = workspaceName.trim()
+
+    if (!normalizedName || normalizedName === workspace.name) {
+      setWorkspaceName(workspace.name)
+      setIsEditingWorkspaceName(false)
+      return
+    }
+
+    setIsSavingWorkspaceName(true)
+    setWorkspaceNameError(null)
+
+    try {
+      const updatedWorkspace = await updateWorkspace(workspace.id, normalizedName)
+      setWorkspace(updatedWorkspace)
+      setWorkspaceName(updatedWorkspace.name)
+    } catch {
+      setWorkspaceName(workspace.name)
+      setWorkspaceNameError('Não foi possível atualizar o nome do workspace.')
+    } finally {
+      setIsSavingWorkspaceName(false)
+      setIsEditingWorkspaceName(false)
+    }
+  }
+
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
@@ -132,8 +164,35 @@ export function ListsPage() {
               </svg>
               Workspace
             </Link>
-            <h1>{workspace?.name ?? 'Listas'}</h1>
+            {isEditingWorkspaceName ? (
+              <input
+                className="workspace-title-input"
+                value={workspaceName}
+                onChange={(event) => setWorkspaceName(event.target.value)}
+                onBlur={() => void handleWorkspaceNameSave()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                aria-label="Nome do workspace"
+                disabled={isSavingWorkspaceName}
+                autoFocus
+              />
+            ) : (
+              <button
+                className="workspace-title"
+                type="button"
+                disabled={!workspace}
+                onClick={() => setIsEditingWorkspaceName(true)}
+              >
+                <h1>{workspace?.name ?? 'Listas'}</h1>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                </svg>
+              </button>
+            )}
             <p>Listas deste workspace</p>
+            {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
           <button
             className="primary-button"

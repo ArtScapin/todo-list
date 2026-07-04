@@ -9,10 +9,10 @@ const THEME_KEY = 'todo-list:theme'
 
 type AuthenticatedLayoutProps = {
   children: ReactNode
-  searchValue: string
-  onSearchChange: (value: string) => void
-  searchLabel: string
-  searchPlaceholder: string
+  searchValue?: string
+  onSearchChange?: (value: string) => void
+  searchLabel?: string
+  searchPlaceholder?: string
 }
 
 export function AuthenticatedLayout({

@@ -50,6 +50,59 @@
   letter-spacing: -1px;
 }
 
+.workspace-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: text;
+}
+
+.workspace-title svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transform: translateX(-5px);
+  transition: opacity 0.18s, transform 0.18s;
+}
+
+.workspace-title:hover svg,
+.workspace-title:focus-visible svg {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.workspace-title-input {
+  width: min(100%, 520px);
+  margin: 3px 0 4px;
+  padding: 3px 7px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.workspace-name-error {
+  display: block;
+  margin-top: 7px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .lists-heading > p:last-child {
   margin: 0;
   color: var(--text-secondary);

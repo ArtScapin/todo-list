@@ -19,3 +19,10 @@ export function createWorkspace(name: string) {
     body: JSON.stringify({ name }),
   })
 }
+
+export function updateWorkspace(id: number, name: string) {
+  return apiRequest<Workspace>(`/workspace/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name }),
+  })
+}

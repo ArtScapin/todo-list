@@ -4,10 +4,10 @@ import './Toolbar.css'
 type ToolbarProps = {
   isDarkTheme: boolean
   userName: string
-  searchValue: string
-  searchLabel: string
-  searchPlaceholder: string
-  onSearchChange: (value: string) => void
+  searchValue?: string
+  searchLabel?: string
+  searchPlaceholder?: string
+  onSearchChange?: (value: string) => void
   onThemeChange: () => void
   onLogout: () => void
 }
@@ -26,6 +26,8 @@ export function Toolbar({
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const currentSearchValue = searchValue ?? ''
+  const currentSearchLabel = searchLabel ?? 'Buscar'
   const nameParts = userName.trim().split(/\s+/).filter(Boolean)
   const initials = nameParts.length > 1
     ? `${nameParts[0][0]}${nameParts.at(-1)?.[0]}`
@@ -57,12 +59,12 @@ export function Toolbar({
         </div>
 
         <div className="toolbar-actions">
-          <div
+          {onSearchChange ? <div
             className={`toolbar-search ${isSearchOpen ? 'open' : ''}`}
             onBlur={(event) => {
               const focusStayedInside = event.currentTarget.contains(event.relatedTarget)
 
-              if (!focusStayedInside && !searchValue.trim()) {
+              if (!focusStayedInside && !currentSearchValue.trim()) {
                 setIsSearchOpen(false)
               }
             }}
@@ -71,9 +73,9 @@ export function Toolbar({
               <input
                 ref={searchInputRef}
                 type="search"
-                aria-label={searchLabel}
-                placeholder={searchPlaceholder}
-                value={searchValue}
+                aria-label={currentSearchLabel}
+                placeholder={searchPlaceholder ?? 'Buscar...'}
+                value={currentSearchValue}
                 onChange={(event) => onSearchChange(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Escape') {
@@ -86,7 +88,7 @@ export function Toolbar({
             <button
               className="search-button"
               type="button"
-              aria-label={isSearchOpen ? 'Fechar busca' : searchLabel}
+              aria-label={isSearchOpen ? 'Fechar busca' : currentSearchLabel}
               onClick={() => {
                 if (isSearchOpen) {
                   onSearchChange('')
@@ -97,6 +99,7 @@ export function Toolbar({
               <span aria-hidden="true" />
             </button>
           </div>
+          : null}
 
           <div className="toolbar-menu" ref={menuRef}>
           <button
