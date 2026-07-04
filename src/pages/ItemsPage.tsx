@@ -13,7 +13,7 @@ import {
   type Item,
   type Priority,
 } from '../services/api/items'
-import { getList, type KanbanList } from '../services/api/lists'
+import { getList, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/items.css'
 
@@ -45,6 +45,10 @@ export function ItemsPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [busyItemIds, setBusyItemIds] = useState<Set<number>>(new Set())
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+  const [isEditingListName, setIsEditingListName] = useState(false)
+  const [listName, setListName] = useState('')
+  const [isSavingListName, setIsSavingListName] = useState(false)
+  const [listNameError, setListNameError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!hasValidIds) {
@@ -62,6 +66,7 @@ export function ItemsPage() {
         ])
         setWorkspace(workspaceData)
         setList(listData)
+        setListName(listData.name)
         setItems(itemsData.sort((first, second) => first.position - second.position))
       } catch {
         if (!controller.signal.aborted) {
@@ -186,6 +191,38 @@ export function ItemsPage() {
     }
   }
 
+  async function handleListNameSave() {
+    if (!list || isSavingListName) return
+
+    const normalizedName = listName.trim()
+
+    if (!normalizedName || normalizedName === list.name) {
+      setListName(list.name)
+      setIsEditingListName(false)
+      return
+    }
+
+    setIsSavingListName(true)
+    setListNameError(null)
+
+    try {
+      const updatedList = await updateList(list.id, {
+        name: normalizedName,
+        color: list.color ?? '#2563eb',
+        status: list.status,
+        position: list.position,
+      })
+      setList(updatedList)
+      setListName(updatedList.name)
+    } catch {
+      setListName(list.name)
+      setListNameError('Não foi possível atualizar o nome da lista.')
+    } finally {
+      setIsSavingListName(false)
+      setIsEditingListName(false)
+    }
+  }
+
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
@@ -195,17 +232,49 @@ export function ItemsPage() {
     >
       <main className="workspaces-content">
         <div className="item-page-heading">
-          <div>
+          <div className="item-heading-context">
+            <span
+              className="list-color-accent"
+              style={{ backgroundColor: list?.color || '#2563eb' }}
+              aria-hidden="true"
+            />
             <Link className="list-back" to={`/workspaces/${parsedWorkspaceId}/lists`}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               {workspace?.name ?? 'Listas'}
             </Link>
-            <h1>{list?.name ?? 'Lista'}</h1>
+            {isEditingListName ? (
+              <input
+                className="list-title-input"
+                value={listName}
+                onChange={(event) => setListName(event.target.value)}
+                onBlur={() => void handleListNameSave()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                aria-label="Nome da lista"
+                disabled={isSavingListName}
+                autoFocus
+              />
+            ) : (
+              <button
+                className="list-title"
+                type="button"
+                disabled={!list}
+                onClick={() => setIsEditingListName(true)}
+              >
+                <h1>{list?.name ?? 'Lista'}</h1>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                </svg>
+              </button>
+            )}
             <p>
               {pendingItemsCount} {pendingItemsCount === 1 ? 'item pendente' : 'itens pendentes'}
             </p>
+            {listNameError ? <span className="list-name-error" role="alert">{listNameError}</span> : null}
           </div>
           <button className="primary-button" type="button" disabled={!list} onClick={openCreateModal}>
             + Novo item
