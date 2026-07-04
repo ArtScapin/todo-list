@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser } from '../services/api/users'
+import { clearCurrentUserCache, getCurrentUser } from '../services/api/users'
 import { removeTokens } from '../services/auth-storage'
 import { Toolbar } from './Toolbar'
 import '../styles/workspaces.css'
@@ -29,21 +29,21 @@ export function AuthenticatedLayout({
   )
 
   useEffect(() => {
-    const controller = new AbortController()
+    let isActive = true
 
     async function loadCurrentUser() {
       try {
-        const user = await getCurrentUser(controller.signal)
-        setUserName(user.name)
+        const user = await getCurrentUser()
+        if (isActive) setUserName(user.name)
       } catch {
-        if (!controller.signal.aborted) {
-          setUserName('Usuário')
-        }
+        if (isActive) setUserName('Usuário')
       }
     }
 
     void loadCurrentUser()
-    return () => controller.abort()
+    return () => {
+      isActive = false
+    }
   }, [])
 
   useEffect(() => {
@@ -56,6 +56,7 @@ export function AuthenticatedLayout({
   }, [isDarkTheme])
 
   function handleLogout() {
+    clearCurrentUserCache()
     removeTokens()
     navigate('/login', { replace: true })
   }
