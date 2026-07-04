@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/api/users'
-import { removeToken } from '../services/auth-storage'
+import { removeTokens } from '../services/auth-storage'
 import { Toolbar } from './Toolbar'
 import '../styles/workspaces.css'
 
@@ -56,7 +56,7 @@ export function AuthenticatedLayout({
   }, [isDarkTheme])
 
   function handleLogout() {
-    removeToken()
+    removeTokens()
     navigate('/login', { replace: true })
   }
 

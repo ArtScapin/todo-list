@@ -6,7 +6,8 @@ type LoginCredentials = {
 }
 
 type LoginResponse = {
-  token?: string
+  token: string
+  refreshToken: string
 }
 
 type RegisterData = {

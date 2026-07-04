@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../services/api/auth'
 import { ApiError } from '../services/api/api'
-import { saveToken } from '../services/auth-storage'
+import { saveTokens } from '../services/auth-storage'
 import '../styles/auth.css'
 
 type Feedback = {
@@ -24,14 +24,14 @@ export function LoginPage() {
     try {
       const data = await login({ username, password })
 
-      if (!data.token) {
+      if (!data.token || !data.refreshToken) {
         setFeedback({
-          message: 'A resposta da API não trouxe um token válido. Tente novamente.',
+          message: 'A resposta da API não trouxe tokens válidos. Tente novamente.',
         })
         return
       }
 
-      saveToken(data.token)
+      saveTokens(data)
       navigate('/workspaces', { replace: true })
     } catch (error) {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined

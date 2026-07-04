@@ -4,11 +4,11 @@ import { ListsPage } from './pages/ListsPage'
 import { ItemsPage } from './pages/ItemsPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
-import { getToken } from './services/auth-storage'
+import { hasStoredSession } from './services/auth-storage'
 import './App.css'
 
 function ProtectedRoute() {
-  return getToken() ? <Outlet /> : <Navigate to="/login" replace />
+  return hasStoredSession() ? <Outlet /> : <Navigate to="/login" replace />
 }
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={getToken() ? <Navigate to="/workspaces" replace /> : <LoginPage />}
+          element={hasStoredSession() ? <Navigate to="/workspaces" replace /> : <LoginPage />}
         />
         <Route path="/register" element={<RegisterPage />} />
         <Route element={<ProtectedRoute />}>
@@ -27,7 +27,7 @@ function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to={getToken() ? '/workspaces' : '/login'} replace />}
+          element={<Navigate to={hasStoredSession() ? '/workspaces' : '/login'} replace />}
         />
       </Routes>
     </BrowserRouter>

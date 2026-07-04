@@ -25,8 +25,8 @@ export function WorkspacesPage() {
     try {
       const data = await getWorkspaces(signal)
       setWorkspaces(data)
-    } catch {
-      if (!signal?.aborted) {
+    } catch (error) {
+      if (!signal?.aborted && !(error instanceof ApiError && error.status === 401)) {
         setLoadError('Não foi possível carregar seus workspaces. Tente novamente.')
       }
     } finally {
@@ -43,8 +43,8 @@ export function WorkspacesPage() {
       try {
         const data = await getWorkspaces(controller.signal)
         setWorkspaces(data)
-      } catch {
-        if (!controller.signal.aborted) {
+      } catch (error) {
+        if (!controller.signal.aborted && !(error instanceof ApiError && error.status === 401)) {
           setLoadError('Não foi possível carregar seus workspaces. Tente novamente.')
         }
       } finally {
