@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ListModal } from '../components/ListModal'
 import { PageLoader } from '../components/PageLoader'
@@ -9,6 +9,7 @@ import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/w
 import '../styles/lists.css'
 
 export function ListsPage() {
+  const navigate = useNavigate()
   const { workspaceId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
   const isValidWorkspaceId = Number.isInteger(parsedWorkspaceId) && parsedWorkspaceId > 0
@@ -25,6 +26,7 @@ export function ListsPage() {
   const [workspaceName, setWorkspaceName] = useState('')
   const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false)
   const [workspaceNameError, setWorkspaceNameError] = useState<string | null>(null)
+  const [isSavingViewMode, setIsSavingViewMode] = useState(false)
 
   useEffect(() => {
     if (!isValidWorkspaceId) {
@@ -137,7 +139,10 @@ export function ListsPage() {
     setWorkspaceNameError(null)
 
     try {
-      const updatedWorkspace = await updateWorkspace(workspace.id, normalizedName)
+      const updatedWorkspace = await updateWorkspace(workspace.id, {
+        name: normalizedName,
+        isKanbanViewMode: Boolean(workspace.isKanbanViewMode),
+      })
       setWorkspace(updatedWorkspace)
       setWorkspaceName(updatedWorkspace.name)
     } catch {
@@ -146,6 +151,29 @@ export function ListsPage() {
     } finally {
       setIsSavingWorkspaceName(false)
       setIsEditingWorkspaceName(false)
+    }
+  }
+
+  async function handleViewModeChange() {
+    if (!workspace || isSavingViewMode) return
+    const isKanbanViewMode = !workspace.isKanbanViewMode
+    setIsSavingViewMode(true)
+    setWorkspaceNameError(null)
+
+    try {
+      const updatedWorkspace = await updateWorkspace(workspace.id, {
+        name: workspace.name,
+        isKanbanViewMode,
+      })
+      setWorkspace(updatedWorkspace)
+
+      if (updatedWorkspace.isKanbanViewMode) {
+        navigate(`/workspaces/${workspace.id}/board`)
+      }
+    } catch {
+      setWorkspaceNameError('Não foi possível alterar o modo de visualização.')
+    } finally {
+      setIsSavingViewMode(false)
     }
   }
 
@@ -209,14 +237,30 @@ export function ListsPage() {
             <p>Listas deste workspace</p>
             {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
-          <button
-            className="primary-button"
-            type="button"
-            disabled={!workspace}
-            onClick={openCreateModal}
-          >
-            + Nova lista
-          </button>
+          <div className="lists-heading-actions">
+            <div className="view-mode-control">
+              <span>Kanban</span>
+              <button
+                className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
+                type="button"
+                role="switch"
+                aria-checked={Boolean(workspace?.isKanbanViewMode)}
+                aria-label="Alternar visualização Kanban"
+                disabled={!workspace || isSavingViewMode}
+                onClick={() => void handleViewModeChange()}
+              >
+                <span />
+              </button>
+            </div>
+            <button
+              className="primary-button"
+              type="button"
+              disabled={!workspace}
+              onClick={openCreateModal}
+            >
+              + Nova lista
+            </button>
+          </div>
         </div>
 
         {(!isLoading || !isValidWorkspaceId) && pageError ? (

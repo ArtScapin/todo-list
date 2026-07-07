@@ -3,6 +3,12 @@ import { apiRequest } from './api'
 export type Workspace = {
   id: number
   name: string
+  isKanbanViewMode: boolean
+}
+
+type WorkspaceData = {
+  name: string
+  isKanbanViewMode: boolean
 }
 
 export function getWorkspaces(signal?: AbortSignal) {
@@ -13,16 +19,16 @@ export function getWorkspace(id: number, signal?: AbortSignal) {
   return apiRequest<Workspace>(`/workspace/${id}`, { signal })
 }
 
-export function createWorkspace(name: string) {
+export function createWorkspace(data: WorkspaceData) {
   return apiRequest<Workspace>('/workspace', {
     method: 'POST',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(data),
   })
 }
 
-export function updateWorkspace(id: number, name: string) {
+export function updateWorkspace(id: number, data: WorkspaceData) {
   return apiRequest<Workspace>(`/workspace/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(data),
   })
 }

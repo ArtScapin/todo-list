@@ -43,6 +43,26 @@
   margin-bottom: 32px;
 }
 
+.lists-heading-actions,
+.view-mode-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-mode-control {
+  padding: 8px 11px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.view-mode-control > span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .lists-heading h1 {
   margin: 3px 0 5px;
   color: var(--text-primary);
@@ -206,5 +226,14 @@
 
   .lists-heading-row .primary-button {
     width: 100%;
+  }
+
+  .lists-heading-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .view-mode-control {
+    justify-content: space-between;
   }
 }

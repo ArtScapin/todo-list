@@ -6,7 +6,7 @@ type WorkspaceModalProps = {
   isSaving: boolean
   errorMessage: string | null
   onClose: () => void
-  onSubmit: (name: string) => Promise<void>
+  onSubmit: (name: string, isKanbanViewMode: boolean) => Promise<void>
 }
 
 export function WorkspaceModal({
@@ -17,6 +17,7 @@ export function WorkspaceModal({
   onSubmit,
 }: WorkspaceModalProps) {
   const [name, setName] = useState('')
+  const [isKanbanViewMode, setIsKanbanViewMode] = useState(false)
 
   useEffect(() => {
     if (!isOpen) {
@@ -39,7 +40,7 @@ export function WorkspaceModal({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await onSubmit(name.trim())
+    await onSubmit(name.trim(), isKanbanViewMode)
   }
 
   return (
@@ -67,6 +68,23 @@ export function WorkspaceModal({
             autoFocus
             required
           />
+
+          <div className="workspace-mode-option">
+            <div>
+              <strong>Modo Kanban</strong>
+              <span>Organize listas como colunas e mova cards entre elas.</span>
+            </div>
+            <button
+              className={`theme-switch ${isKanbanViewMode ? 'active' : ''}`}
+              type="button"
+              role="switch"
+              aria-checked={isKanbanViewMode}
+              aria-label="Ativar visualização Kanban"
+              onClick={() => setIsKanbanViewMode((current) => !current)}
+            >
+              <span />
+            </button>
+          </div>
 
           {errorMessage ? <div className="feedback error" role="alert">{errorMessage}</div> : null}
 

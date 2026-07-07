@@ -2,15 +2,27 @@ import { useEffect, useState, type FormEvent } from 'react'
 import type { Item, Priority } from '../services/api/items'
 import './WorkspaceModal.css'
 
+type ItemFormData = {
+  name: string
+  description: string
+  priority: Priority
+}
+
 type ItemModalProps = {
   item?: Item | null
   isSaving: boolean
   errorMessage: string | null
   onClose: () => void
-  onSubmit: (data: { name: string; description: string; priority: Priority }) => Promise<void>
+  onSubmit: (data: ItemFormData) => Promise<void>
 }
 
-export function ItemModal({ item, isSaving, errorMessage, onClose, onSubmit }: ItemModalProps) {
+export function ItemModal({
+  item,
+  isSaving,
+  errorMessage,
+  onClose,
+  onSubmit,
+}: ItemModalProps) {
   const [name, setName] = useState(item?.name ?? '')
   const [description, setDescription] = useState(item?.description ?? '')
   const [priority, setPriority] = useState<Priority>(item?.priority ?? 'MEDIUM')
@@ -28,7 +40,11 @@ export function ItemModal({ item, isSaving, errorMessage, onClose, onSubmit }: I
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    await onSubmit({ name: name.trim(), description: description.trim(), priority })
+    await onSubmit({
+      name: name.trim(),
+      description: description.trim(),
+      priority,
+    })
   }
 
   return (
@@ -77,6 +93,7 @@ export function ItemModal({ item, isSaving, errorMessage, onClose, onSubmit }: I
             <option value="HIGH">Alta</option>
             <option value="CRITICAL">Crítica</option>
           </select>
+
 
           {errorMessage ? <div className="feedback error" role="alert">{errorMessage}</div> : null}
 

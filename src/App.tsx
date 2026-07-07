@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom
 import { WorkspacesPage } from './pages/WorkspacesPage'
 import { ListsPage } from './pages/ListsPage'
 import { ItemsPage } from './pages/ItemsPage'
+import { WorkspaceBoardPage } from './pages/WorkspaceBoardPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { hasStoredSession } from './services/auth-storage'
@@ -24,6 +25,7 @@ function App() {
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/workspaces/:workspaceId/lists" element={<ListsPage />} />
           <Route path="/workspaces/:workspaceId/lists/:listId" element={<ItemsPage />} />
+          <Route path="/workspaces/:workspaceId/board" element={<WorkspaceBoardPage />} />
         </Route>
         <Route
           path="*"

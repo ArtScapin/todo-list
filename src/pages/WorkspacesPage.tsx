@@ -63,12 +63,12 @@ export function WorkspacesPage() {
     setSaveError(null)
   }, [])
 
-  async function handleCreateWorkspace(name: string) {
+  async function handleCreateWorkspace(name: string, isKanbanViewMode: boolean) {
     setIsSaving(true)
     setSaveError(null)
 
     try {
-      const workspace = await createWorkspace(name)
+      const workspace = await createWorkspace({ name, isKanbanViewMode })
       setWorkspaces((current) => [...current, workspace])
       closeModal()
     } catch (error) {
@@ -133,10 +133,14 @@ export function WorkspacesPage() {
         {!isLoading && !loadError && filteredWorkspaces.length > 0 ? (
           <section className="workspace-grid" aria-label="Lista de workspaces">
             {filteredWorkspaces.map((workspace) => (
-              <Link className="workspace-card" key={workspace.id} to={`/workspaces/${workspace.id}/lists`}>
+              <Link
+                className="workspace-card"
+                key={workspace.id}
+                to={`/workspaces/${workspace.id}/${workspace.isKanbanViewMode ? 'board' : 'lists'}`}
+              >
                 <span className="workspace-icon" aria-hidden="true">W</span>
                 <h2>{workspace.name}</h2>
-                <p>Workspace</p>
+                <p>{workspace.isKanbanViewMode ? 'Kanban' : 'Todo List'}</p>
               </Link>
             ))}
           </section>

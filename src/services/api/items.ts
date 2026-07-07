@@ -47,3 +47,10 @@ export function changeItemStatus(id: number) {
 export function deleteItem(id: number) {
   return apiRequest<void>(`/item/${id}`, { method: 'DELETE' })
 }
+
+export function moveItem(id: number, listId: number, position: number) {
+  return apiRequest<Item>(`/item/${id}/move`, {
+    method: 'PATCH',
+    body: JSON.stringify({ list_id: listId, position }),
+  })
+}
