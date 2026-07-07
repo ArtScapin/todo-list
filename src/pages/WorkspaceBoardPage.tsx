@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
@@ -8,7 +8,7 @@ import { KanbanSettingsModal } from '../components/KanbanSettingsModal'
 import { PageLoader } from '../components/PageLoader'
 import { createItem, deleteItem, getItems, moveItem, updateItem, type Item, type Priority } from '../services/api/items'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
-import { getWorkspace, type Workspace } from '../services/api/workspaces'
+import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/board.css'
 
 type BoardColumn = KanbanList & {
@@ -36,6 +36,7 @@ const PRIORITY_LABELS: Record<Priority, string> = {
 }
 
 export function WorkspaceBoardPage() {
+  const navigate = useNavigate()
   const { workspaceId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
   const isValidWorkspaceId = Number.isInteger(parsedWorkspaceId) && parsedWorkspaceId > 0
@@ -50,6 +51,11 @@ export function WorkspaceBoardPage() {
   const [itemListId, setItemListId] = useState<number | null>(null)
   const [isSavingItem, setIsSavingItem] = useState(false)
   const [itemError, setItemError] = useState<string | null>(null)
+  const [isEditingWorkspaceName, setIsEditingWorkspaceName] = useState(false)
+  const [workspaceName, setWorkspaceName] = useState('')
+  const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false)
+  const [workspaceNameError, setWorkspaceNameError] = useState<string | null>(null)
+  const [isSavingViewMode, setIsSavingViewMode] = useState(false)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const selectedItemColumn = selectedItem
     ? columns.find((column) => column.items.some((item) => item.id === selectedItem.id))
@@ -81,6 +87,7 @@ export function WorkspaceBoardPage() {
         })
 
         setWorkspace(workspaceData)
+        setWorkspaceName(workspaceData.name)
         setColumns(withKanbanItemStatuses(boardColumns))
       } catch {
         if (!controller.signal.aborted) {
@@ -94,6 +101,59 @@ export function WorkspaceBoardPage() {
     void loadBoard()
     return () => controller.abort()
   }, [isValidWorkspaceId, parsedWorkspaceId])
+
+  async function handleWorkspaceNameSave() {
+    if (!workspace || isSavingWorkspaceName) return
+
+    const normalizedName = workspaceName.trim()
+
+    if (!normalizedName || normalizedName === workspace.name) {
+      setWorkspaceName(workspace.name)
+      setIsEditingWorkspaceName(false)
+      return
+    }
+
+    setIsSavingWorkspaceName(true)
+    setWorkspaceNameError(null)
+
+    try {
+      const updatedWorkspace = await updateWorkspace(workspace.id, {
+        name: normalizedName,
+        isKanbanViewMode: Boolean(workspace.isKanbanViewMode),
+      })
+      setWorkspace(updatedWorkspace)
+      setWorkspaceName(updatedWorkspace.name)
+    } catch {
+      setWorkspaceName(workspace.name)
+      setWorkspaceNameError('Não foi possível atualizar o nome do workspace.')
+    } finally {
+      setIsSavingWorkspaceName(false)
+      setIsEditingWorkspaceName(false)
+    }
+  }
+
+  async function handleViewModeChange() {
+    if (!workspace || isSavingViewMode) return
+    const isKanbanViewMode = !workspace.isKanbanViewMode
+    setIsSavingViewMode(true)
+    setWorkspaceNameError(null)
+
+    try {
+      const updatedWorkspace = await updateWorkspace(workspace.id, {
+        name: workspace.name,
+        isKanbanViewMode,
+      })
+      setWorkspace(updatedWorkspace)
+
+      if (!updatedWorkspace.isKanbanViewMode) {
+        navigate(`/workspaces/${workspace.id}/lists`)
+      }
+    } catch {
+      setWorkspaceNameError('NÃ£o foi possÃ­vel alterar o modo de visualizaÃ§Ã£o.')
+    } finally {
+      setIsSavingViewMode(false)
+    }
+  }
 
   async function handleDragEnd(result: DropResult) {
     if (!result.destination) return
@@ -208,21 +268,26 @@ export function WorkspaceBoardPage() {
     name: string
     description: string
     priority: Priority
+    status: boolean
+    listId?: number
   }) {
-    if (itemListId === null) return
-    const column = columns.find((current) => current.id === itemListId)
+    const targetListId = data.listId ?? itemListId
+    if (targetListId === null) return
+    const column = columns.find((current) => current.id === targetListId)
     if (!column) return
     setIsSavingItem(true)
     setItemError(null)
 
     try {
-      const item = await createItem(itemListId, {
-        ...data,
+      const item = await createItem(targetListId, {
+        name: data.name,
+        description: data.description,
+        priority: data.priority,
         status: false,
         position: column.items.length,
       })
       setColumns((current) => withKanbanItemStatuses(current.map((currentColumn) => (
-        currentColumn.id === itemListId
+        currentColumn.id === targetListId
           ? { ...currentColumn, items: [...currentColumn.items, item] }
           : currentColumn
       ))))
@@ -267,6 +332,51 @@ export function WorkspaceBoardPage() {
     }
   }
 
+  async function handleChangeSelectedItemStatus(columnId: number) {
+    if (!selectedItem) return
+
+    const sourceColumn = columns.find((column) => column.items.some((item) => item.id === selectedItem.id))
+    const destinationColumn = columns.find((column) => column.id === columnId)
+
+    if (!sourceColumn || !destinationColumn || sourceColumn.id === destinationColumn.id) {
+      return
+    }
+
+    const previousColumns = columns
+    const nextColumns = columns.map((column) => ({ ...column, items: [...column.items] }))
+    const nextSourceColumn = nextColumns.find((column) => column.id === sourceColumn.id)
+    const nextDestinationColumn = nextColumns.find((column) => column.id === destinationColumn.id)
+
+    if (!nextSourceColumn || !nextDestinationColumn) return
+
+    const sourceIndex = nextSourceColumn.items.findIndex((item) => item.id === selectedItem.id)
+    if (sourceIndex < 0) return
+
+    const [movedItem] = nextSourceColumn.items.splice(sourceIndex, 1)
+    if (!movedItem) return
+
+    nextDestinationColumn.items.push({ ...movedItem, position: nextDestinationColumn.items.length })
+    nextSourceColumn.items = nextSourceColumn.items.map((item, position) => ({ ...item, position }))
+    nextDestinationColumn.items = nextDestinationColumn.items.map((item, position) => ({ ...item, position }))
+    setColumns(withKanbanItemStatuses(nextColumns))
+    setMoveError(null)
+
+    try {
+      const updatedMovedItem = await moveItem(movedItem.id, columnId, nextDestinationColumn.items.length - 1)
+      setColumns((current) => withKanbanItemStatuses(current.map((column) => ({
+        ...column,
+        items: column.items.map((item) => (
+          item.id === updatedMovedItem.id ? updatedMovedItem : item
+        )),
+      }))))
+      setSelectedItem(updatedMovedItem)
+    } catch {
+      setColumns(previousColumns)
+      setSelectedItem(selectedItem)
+      setMoveError('Não foi possível alterar o status do card. A alteração foi desfeita.')
+    }
+  }
+
   async function handleDeleteSelectedItem() {
     if (!selectedItem) return
 
@@ -287,6 +397,23 @@ export function WorkspaceBoardPage() {
     }
   }
 
+  function openCreateItemModal(listId?: number) {
+    if (listId !== undefined) {
+      setItemError(null)
+      setItemListId(listId)
+      return
+    }
+
+    const firstColumnId = [...columns]
+      .sort((first, second) => first.position - second.position)
+      .at(0)?.id
+
+    if (firstColumnId === undefined) return
+
+    setItemError(null)
+    setItemListId(firstColumnId)
+  }
+
   if (isLoading && isValidWorkspaceId) {
     return (
       <AuthenticatedLayout>
@@ -299,23 +426,80 @@ export function WorkspaceBoardPage() {
     <AuthenticatedLayout>
       <main className="board-page">
         <header className="board-heading">
-          <div>
-            <Link className="workspace-back" to="/workspaces">Workspace</Link>
-            <h1>{workspace?.name ?? 'Quadro Kanban'}</h1>
+          <div className="board-heading-content">
+            <Link className="workspace-back" to="/workspaces">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Workspace
+            </Link>
+            {workspace && isEditingWorkspaceName ? (
+              <input
+                className="workspace-title-input"
+                value={workspaceName}
+                onChange={(event) => setWorkspaceName(event.target.value)}
+                onBlur={() => void handleWorkspaceNameSave()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                }}
+                aria-label="Nome do workspace"
+                disabled={isSavingWorkspaceName}
+                autoFocus
+              />
+            ) : workspace ? (
+              <button
+                className="workspace-title"
+                type="button"
+                onClick={() => setIsEditingWorkspaceName(true)}
+              >
+                <h1>{workspace.name}</h1>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                </svg>
+              </button>
+            ) : (
+              <h1>Quadro Kanban</h1>
+            )}
             <p>Arraste os cards para organizar o fluxo de trabalho.</p>
+            {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
-          <button
-            className="board-settings-button"
-            type="button"
-            aria-label="Configurar colunas"
-            title="Configurar colunas"
-            onClick={() => setIsSettingsOpen(true)}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.55 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.55a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.45 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.37.33.71.6 1 .3.28.7.43 1.1.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
-            </svg>
-          </button>
+          <div className="board-heading-actions">
+            <div className="view-mode-control">
+              <span>Kanban</span>
+              <button
+                className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
+                type="button"
+                role="switch"
+                aria-checked={Boolean(workspace?.isKanbanViewMode)}
+                aria-label="Alternar visualizaÃ§Ã£o Kanban"
+                disabled={!workspace || isSavingViewMode}
+                onClick={() => void handleViewModeChange()}
+              >
+                <span />
+              </button>
+            </div>
+            <button
+              className="primary-button board-create-button"
+              type="button"
+              disabled={columns.length === 0}
+              onClick={() => openCreateItemModal()}
+            >
+              + Novo item
+            </button>
+            <button
+              className="board-settings-button"
+              type="button"
+              aria-label="Configurar colunas"
+              title="Configurar colunas"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.55 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.55a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.45 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.37.33.71.6 1 .3.28.7.43 1.1.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
+              </svg>
+            </button>
+          </div>
         </header>
 
         {(!isValidWorkspaceId || errorMessage) ? (
@@ -376,10 +560,7 @@ export function WorkspaceBoardPage() {
                         <button
                           className={`kanban-add-item ${column.items.length === 0 ? 'always-visible' : ''}`}
                           type="button"
-                          onClick={() => {
-                            setItemError(null)
-                            setItemListId(column.id)
-                          }}
+                          onClick={() => openCreateItemModal(column.id)}
                         >
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M12 5v14M5 12h14" />
@@ -416,6 +597,13 @@ export function WorkspaceBoardPage() {
         <ItemModal
           isSaving={isSavingItem}
           errorMessage={itemError}
+          allowStatusEdit={false}
+          lists={columns.map((column) => ({
+            id: column.id,
+            name: column.name,
+            color: column.color,
+          }))}
+          selectedListId={itemListId}
           onClose={() => {
             setItemListId(null)
             setItemError(null)
@@ -427,8 +615,12 @@ export function WorkspaceBoardPage() {
       {selectedItem ? (
         <ItemDetailsModal
           item={selectedItem}
-          columnName={selectedItemColumn?.name ?? 'Coluna atual'}
-          columnColor={selectedItemColumn?.color ?? '#2563eb'}
+          columns={columns.map((column) => ({
+            id: column.id,
+            name: column.name,
+            color: column.color,
+          }))}
+          currentColumnId={selectedItemColumn?.id ?? -1}
           isSaving={isSavingItem}
           errorMessage={itemError}
           onClose={() => {
@@ -436,6 +628,7 @@ export function WorkspaceBoardPage() {
             setItemError(null)
           }}
           onSave={handleUpdateItem}
+          onStatusChange={handleChangeSelectedItemStatus}
           onDelete={handleDeleteSelectedItem}
         />
       ) : null}

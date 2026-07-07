@@ -4,12 +4,17 @@ import './WorkspaceModal.css'
 
 type ItemDetailsModalProps = {
   item: Item
-  columnName: string
-  columnColor: string
+  columns: Array<{
+    id: number
+    name: string
+    color?: string
+  }>
+  currentColumnId: number
   isSaving: boolean
   errorMessage: string | null
   onClose: () => void
   onSave: (data: { name: string; description: string; priority: Priority }) => Promise<void>
+  onStatusChange: (columnId: number) => Promise<void>
   onDelete: () => Promise<void>
 }
 
@@ -31,12 +36,13 @@ const PRIORITY_COLORS: Record<Priority, string> = {
 
 export function ItemDetailsModal({
   item,
-  columnName,
-  columnColor,
+  columns,
+  currentColumnId,
   isSaving,
   errorMessage,
   onClose,
   onSave,
+  onStatusChange,
   onDelete,
 }: ItemDetailsModalProps) {
   const [name, setName] = useState(item.name)
@@ -44,7 +50,9 @@ export function ItemDetailsModal({
   const [priority, setPriority] = useState<Priority>(item.priority)
   const [editingField, setEditingField] = useState<'name' | 'description' | null>(null)
   const [isPriorityOpen, setIsPriorityOpen] = useState(false)
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const currentColumn = columns.find((column) => column.id === currentColumnId)
 
   useEffect(() => {
     function handleKeyDown(event: globalThis.KeyboardEvent) {
@@ -271,10 +279,53 @@ export function ItemDetailsModal({
             </div>
             <div
               className="status-property-card"
-              style={{ '--status-color': columnColor } as CSSProperties}
+              style={{ '--status-color': currentColumn?.color || '#2563eb' } as CSSProperties}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setIsStatusOpen(false)
+                }
+              }}
             >
               <span>Status</span>
-              <strong>{columnName}</strong>
+              <button
+                className="priority-combo-trigger"
+                type="button"
+                onClick={() => setIsStatusOpen((current) => !current)}
+                aria-haspopup="listbox"
+                aria-expanded={isStatusOpen}
+                disabled={isSaving}
+              >
+                {currentColumn?.name ?? 'Sem status'}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {isStatusOpen ? (
+                <div className="priority-combo-menu" role="listbox">
+                  {columns.map((column) => (
+                    <button
+                      className={column.id === currentColumnId ? 'selected' : ''}
+                      type="button"
+                      role="option"
+                      aria-selected={column.id === currentColumnId}
+                      key={column.id}
+                      onClick={() => {
+                        setIsStatusOpen(false)
+                        if (column.id !== currentColumnId) {
+                          void onStatusChange(column.id)
+                        }
+                      }}
+                    >
+                      <span
+                        className="priority-marker"
+                        style={{ '--priority-option-color': column.color || '#2563eb' } as CSSProperties}
+                        aria-hidden="true"
+                      />
+                      {column.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
 

@@ -498,10 +498,10 @@
 }
 .status-property-card {
   position: relative;
-  overflow: hidden;
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--status-color) 16%, transparent), transparent 62%),
     var(--page-background);
+  isolation: isolate;
 }
 
 .status-property-card::before {
@@ -509,7 +509,9 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
+  border-radius: 10px 0 0 10px;
   background: var(--status-color);
+  pointer-events: none;
 }
 
 .status-property-card strong {

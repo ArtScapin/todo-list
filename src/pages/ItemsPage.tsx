@@ -112,6 +112,8 @@ export function ItemsPage() {
     name: string
     description: string
     priority: Priority
+    status: boolean
+    listId?: number
   }) {
     setIsSaving(true)
     setSaveError(null)
@@ -119,7 +121,9 @@ export function ItemsPage() {
     try {
       if (editingItem) {
         const updatedItem = await updateItem(editingItem.id, {
-          ...data,
+          name: data.name,
+          description: data.description,
+          priority: data.priority,
           status: editingItem.status,
           position: editingItem.position,
         })
@@ -131,7 +135,9 @@ export function ItemsPage() {
           ? 0
           : Math.max(...items.map((item) => item.position)) + 1
         const createdItem = await createItem(parsedListId, {
-          ...data,
+          name: data.name,
+          description: data.description,
+          priority: data.priority,
           status: false,
           position: nextPosition,
         })
@@ -377,6 +383,7 @@ export function ItemsPage() {
           item={editingItem}
           isSaving={isSaving}
           errorMessage={saveError}
+          allowStatusEdit={false}
           onClose={closeModal}
           onSubmit={handleSaveItem}
         />
