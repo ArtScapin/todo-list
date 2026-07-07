@@ -3,12 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ListModal } from '../components/ListModal'
 import { PageLoader } from '../components/PageLoader'
+import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/lists.css'
 
 export function ListsPage() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { workspaceId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
@@ -46,7 +48,7 @@ export function ListsPage() {
         setLists(listsData.sort((first, second) => first.position - second.position))
       } catch {
         if (!controller.signal.aborted) {
-          setErrorMessage('Não foi possível carregar as listas deste workspace.')
+          setErrorMessage(t.lists.loadError)
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -57,12 +59,12 @@ export function ListsPage() {
 
     void loadPage()
     return () => controller.abort()
-  }, [isValidWorkspaceId, parsedWorkspaceId])
+  }, [isValidWorkspaceId, parsedWorkspaceId, t.lists.loadError])
 
   const filteredLists = lists.filter((list) =>
     list.name.toLocaleLowerCase().includes(searchValue.trim().toLocaleLowerCase()),
   )
-  const pageError = isValidWorkspaceId ? errorMessage : 'Workspace inválido.'
+  const pageError = isValidWorkspaceId ? errorMessage : t.lists.invalidWorkspace
 
   function closeModal() {
     setIsModalOpen(false)
@@ -116,8 +118,8 @@ export function ListsPage() {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined
       setSaveError(
         hasApiResponse
-          ? 'Não foi possível salvar a lista. Verifique os dados informados.'
-          : 'Não conseguimos conectar à API. Tente novamente em instantes.',
+          ? t.lists.saveError
+          : t.lists.saveApiError,
       )
     } finally {
       setIsSaving(false)
@@ -147,7 +149,7 @@ export function ListsPage() {
       setWorkspaceName(updatedWorkspace.name)
     } catch {
       setWorkspaceName(workspace.name)
-      setWorkspaceNameError('Não foi possível atualizar o nome do workspace.')
+      setWorkspaceNameError(t.lists.renameError)
     } finally {
       setIsSavingWorkspaceName(false)
       setIsEditingWorkspaceName(false)
@@ -171,7 +173,7 @@ export function ListsPage() {
         navigate(`/workspaces/${workspace.id}/board`)
       }
     } catch {
-      setWorkspaceNameError('Não foi possível alterar o modo de visualização.')
+      setWorkspaceNameError(t.lists.toggleViewError)
     } finally {
       setIsSavingViewMode(false)
     }
@@ -181,12 +183,12 @@ export function ListsPage() {
     return (
       <AuthenticatedLayout
         searchValue={searchValue}
-        searchLabel="Buscar listas"
-        searchPlaceholder="Buscar lista..."
+        searchLabel={t.lists.searchLabel}
+        searchPlaceholder={t.lists.searchPlaceholder}
         onSearchChange={setSearchValue}
       >
         <main className="workspaces-content">
-          <PageLoader label="Carregando workspace..." />
+          <PageLoader label={t.lists.loadingWorkspace} />
         </main>
       </AuthenticatedLayout>
     )
@@ -195,8 +197,8 @@ export function ListsPage() {
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
-      searchLabel="Buscar listas"
-      searchPlaceholder="Buscar lista..."
+      searchLabel={t.lists.searchLabel}
+      searchPlaceholder={t.lists.searchPlaceholder}
       onSearchChange={setSearchValue}
     >
       <main className="workspaces-content">
@@ -206,7 +208,7 @@ export function ListsPage() {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              Workspace
+              {t.common.workspace}
             </Link>
             {workspace && isEditingWorkspaceName ? (
               <input
@@ -217,7 +219,7 @@ export function ListsPage() {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') event.currentTarget.blur()
                 }}
-                aria-label="Nome do workspace"
+                aria-label={t.common.name}
                 disabled={isSavingWorkspaceName}
                 autoFocus
               />
@@ -234,18 +236,18 @@ export function ListsPage() {
                 </svg>
               </button>
             ) : null}
-            <p>Listas deste workspace</p>
+            <p>{t.lists.subtitle}</p>
             {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
           <div className="lists-heading-actions">
             <div className="view-mode-control">
-              <span>Kanban</span>
+              <span>{t.common.kanban}</span>
               <button
                 className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
                 type="button"
                 role="switch"
                 aria-checked={Boolean(workspace?.isKanbanViewMode)}
-                aria-label="Alternar visualização Kanban"
+                aria-label={t.workspaceModal.toggleKanban}
                 disabled={!workspace || isSavingViewMode}
                 onClick={() => void handleViewModeChange()}
               >
@@ -258,7 +260,7 @@ export function ListsPage() {
               disabled={!workspace}
               onClick={openCreateModal}
             >
-              + Nova lista
+              {t.common.createList}
             </button>
           </div>
         </div>
@@ -267,27 +269,27 @@ export function ListsPage() {
           <div className="state-card error-state">
             <p>{pageError}</p>
             <Link className="secondary-button back-action" to="/workspaces">
-              Voltar
+              {t.common.back}
             </Link>
           </div>
         ) : null}
 
         {!isLoading && !pageError && lists.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhuma lista ainda</h2>
-            <p>Este workspace ainda não possui listas.</p>
+            <h2>{t.lists.emptyTitle}</h2>
+            <p>{t.lists.emptyDescription}</p>
           </div>
         ) : null}
 
         {!isLoading && !pageError && lists.length > 0 && filteredLists.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhum resultado</h2>
-            <p>Não encontramos uma lista com esse nome.</p>
+            <h2>{t.common.noResults}</h2>
+            <p>{t.lists.noResults}</p>
           </div>
         ) : null}
 
         {!isLoading && !pageError && filteredLists.length > 0 ? (
-          <section className="lists-grid" aria-label="Listas do workspace">
+          <section className="lists-grid" aria-label={t.lists.gridLabel}>
             {filteredLists.map((list) => (
               <article
                 className="list-card"
@@ -301,15 +303,15 @@ export function ListsPage() {
                   <header className="list-card-header">
                     <div>
                       <h2>{list.name}</h2>
-                      <p>{list.status ? 'Concluída' : 'Pendente'}</p>
+                      <p>{list.status ? t.lists.completed : t.lists.pending}</p>
                     </div>
                   </header>
                 </Link>
                 <button
                   className="list-edit-button"
                   type="button"
-                  aria-label={`Editar ${list.name}`}
-                  title="Editar lista"
+                  aria-label={t.lists.editAria(list.name)}
+                  title={t.lists.editTitle}
                   onClick={() => openEditModal(list)}
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">

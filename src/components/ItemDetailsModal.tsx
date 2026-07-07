@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useI18n } from '../i18n'
 import type { Item, Priority } from '../services/api/items'
 import './WorkspaceModal.css'
 
@@ -16,13 +17,6 @@ type ItemDetailsModalProps = {
   onSave: (data: { name: string; description: string; priority: Priority }) => Promise<void>
   onStatusChange: (columnId: number) => Promise<void>
   onDelete: () => Promise<void>
-}
-
-const PRIORITY_LABELS: Record<Priority, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  CRITICAL: 'Crítica',
 }
 
 const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
@@ -45,6 +39,7 @@ export function ItemDetailsModal({
   onStatusChange,
   onDelete,
 }: ItemDetailsModalProps) {
+  const { t } = useI18n()
   const [name, setName] = useState(item.name)
   const [description, setDescription] = useState(item.description ?? '')
   const [priority, setPriority] = useState<Priority>(item.priority)
@@ -165,8 +160,8 @@ export function ItemDetailsModal({
             <button
               className="item-details-delete"
               type="button"
-              aria-label="Apagar item"
-              title="Apagar item"
+              aria-label={t.itemDetails.deleteItem}
+              title={t.itemDetails.deleteItem}
               onClick={() => setIsConfirmingDelete(true)}
               disabled={isSaving}
             >
@@ -174,17 +169,17 @@ export function ItemDetailsModal({
                 <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
               </svg>
             </button>
-            <button type="button" aria-label="Fechar detalhes" onClick={onClose}>×</button>
+            <button type="button" aria-label={t.itemDetails.closeDetails} onClick={onClose}>&times;</button>
           </div>
         </div>
 
         <div className="item-details-grid">
           {isConfirmingDelete ? (
             <div className="delete-confirmation" role="alert">
-              <span>Apagar este item?</span>
+              <span>{t.itemDetails.deleteConfirm}</span>
               <div>
                 <button type="button" onClick={() => setIsConfirmingDelete(false)} disabled={isSaving}>
-                  Cancelar
+                  {t.common.cancel}
                 </button>
                 <button
                   className="danger-confirm"
@@ -192,21 +187,21 @@ export function ItemDetailsModal({
                   onClick={() => void onDelete()}
                   disabled={isSaving}
                 >
-                  {isSaving ? 'Apagando...' : 'Apagar'}
+                  {isSaving ? t.common.deleting : t.common.yesDelete}
                 </button>
               </div>
             </div>
           ) : null}
 
           <div className="editable-description-block">
-            <span>Descrição</span>
+            <span>{t.common.description}</span>
             {editingField === 'description' ? (
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 onBlur={() => void saveChanges({ description })}
                 onKeyDown={handleTextareaKeyDown}
-                placeholder="Detalhes opcionais"
+                placeholder={t.common.optionalDetails}
                 rows={5}
                 disabled={isSaving}
                 autoFocus
@@ -218,7 +213,7 @@ export function ItemDetailsModal({
                 onClick={() => setEditingField('description')}
                 disabled={isSaving}
               >
-                <p>{item.description || 'Sem descrição.'}</p>
+                <p>{item.description || t.common.noDescription}</p>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
@@ -237,7 +232,7 @@ export function ItemDetailsModal({
                 }
               }}
             >
-              <span>Prioridade</span>
+              <span>{t.common.priority}</span>
               <button
                 className="priority-combo-trigger"
                 type="button"
@@ -246,7 +241,7 @@ export function ItemDetailsModal({
                 aria-expanded={isPriorityOpen}
                 disabled={isSaving}
               >
-                {PRIORITY_LABELS[priority]}
+                {t.priorities[priority]}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m6 9 6 6 6-6" />
                 </svg>
@@ -271,7 +266,7 @@ export function ItemDetailsModal({
                         style={{ '--priority-option-color': PRIORITY_COLORS[currentPriority] } as CSSProperties}
                         aria-hidden="true"
                       />
-                      {PRIORITY_LABELS[currentPriority]}
+                      {t.priorities[currentPriority]}
                     </button>
                   ))}
                 </div>
@@ -286,7 +281,7 @@ export function ItemDetailsModal({
                 }
               }}
             >
-              <span>Status</span>
+              <span>{t.common.status}</span>
               <button
                 className="priority-combo-trigger"
                 type="button"
@@ -295,7 +290,7 @@ export function ItemDetailsModal({
                 aria-expanded={isStatusOpen}
                 disabled={isSaving}
               >
-                {currentColumn?.name ?? 'Sem status'}
+                {currentColumn?.name ?? t.itemDetails.statusFallback}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m6 9 6 6 6-6" />
                 </svg>

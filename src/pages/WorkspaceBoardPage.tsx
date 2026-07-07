@@ -6,6 +6,7 @@ import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
 import { KanbanSettingsModal } from '../components/KanbanSettingsModal'
 import { PageLoader } from '../components/PageLoader'
+import { useI18n } from '../i18n'
 import { createItem, deleteItem, getItems, moveItem, updateItem, type Item, type Priority } from '../services/api/items'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
@@ -28,14 +29,8 @@ function withKanbanItemStatuses(columns: BoardColumn[]) {
   }))
 }
 
-const PRIORITY_LABELS: Record<Priority, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  CRITICAL: 'Crítica',
-}
-
 export function WorkspaceBoardPage() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { workspaceId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
@@ -91,7 +86,7 @@ export function WorkspaceBoardPage() {
         setColumns(withKanbanItemStatuses(boardColumns))
       } catch {
         if (!controller.signal.aborted) {
-          setErrorMessage('NÃ£o foi possÃ­vel carregar o quadro Kanban.')
+          setErrorMessage(t.board.loadError)
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false)
@@ -100,7 +95,7 @@ export function WorkspaceBoardPage() {
 
     void loadBoard()
     return () => controller.abort()
-  }, [isValidWorkspaceId, parsedWorkspaceId])
+  }, [isValidWorkspaceId, parsedWorkspaceId, t.board.loadError])
 
   async function handleWorkspaceNameSave() {
     if (!workspace || isSavingWorkspaceName) return
@@ -125,7 +120,7 @@ export function WorkspaceBoardPage() {
       setWorkspaceName(updatedWorkspace.name)
     } catch {
       setWorkspaceName(workspace.name)
-      setWorkspaceNameError('Não foi possível atualizar o nome do workspace.')
+      setWorkspaceNameError(t.lists.renameError)
     } finally {
       setIsSavingWorkspaceName(false)
       setIsEditingWorkspaceName(false)
@@ -149,7 +144,7 @@ export function WorkspaceBoardPage() {
         navigate(`/workspaces/${workspace.id}/lists`)
       }
     } catch {
-      setWorkspaceNameError('NÃ£o foi possÃ­vel alterar o modo de visualizaÃ§Ã£o.')
+      setWorkspaceNameError(t.lists.toggleViewError)
     } finally {
       setIsSavingViewMode(false)
     }
@@ -192,7 +187,7 @@ export function WorkspaceBoardPage() {
       }))))
     } catch {
       setColumns(previousColumns)
-      setMoveError('Não foi possível mover o card. A alteração foi desfeita.')
+      setMoveError(t.board.moveError)
     }
   }
 
@@ -210,7 +205,7 @@ export function WorkspaceBoardPage() {
       })
       setColumns((current) => withKanbanItemStatuses([...current, { ...column, items: [] }]))
     } catch {
-      setSettingsError('NÃ£o foi possÃ­vel adicionar a coluna.')
+      setSettingsError(t.board.addColumnError)
     } finally {
       setIsSavingSettings(false)
     }
@@ -233,7 +228,7 @@ export function WorkspaceBoardPage() {
           : currentColumn
       ))))
     } catch {
-      setSettingsError('NÃ£o foi possÃ­vel atualizar a coluna.')
+      setSettingsError(t.board.updateColumnError)
     } finally {
       setIsSavingSettings(false)
     }
@@ -258,7 +253,7 @@ export function WorkspaceBoardPage() {
       })))
     } catch {
       setColumns(previousColumns)
-      setSettingsError('NÃ£o foi possÃ­vel salvar a nova ordem.')
+      setSettingsError(t.board.reorderColumnError)
     } finally {
       setIsSavingSettings(false)
     }
@@ -293,7 +288,7 @@ export function WorkspaceBoardPage() {
       ))))
       setItemListId(null)
     } catch {
-      setItemError('NÃ£o foi possÃ­vel adicionar o item.')
+      setItemError(t.board.addItemError)
     } finally {
       setIsSavingItem(false)
     }
@@ -325,8 +320,8 @@ export function WorkspaceBoardPage() {
       }))))
       setSelectedItem(updatedItem)
     } catch {
-      setItemError('Não foi possível salvar as alterações do item.')
-      throw new Error('Não foi possível salvar as alterações do item.')
+      setItemError(t.itemDetails.saveError)
+      throw new Error(t.itemDetails.saveError)
     } finally {
       setIsSavingItem(false)
     }
@@ -373,7 +368,7 @@ export function WorkspaceBoardPage() {
     } catch {
       setColumns(previousColumns)
       setSelectedItem(selectedItem)
-      setMoveError('Não foi possível alterar o status do card. A alteração foi desfeita.')
+      setMoveError(t.board.moveStatusError)
     }
   }
 
@@ -391,7 +386,7 @@ export function WorkspaceBoardPage() {
       }))))
       setSelectedItem(null)
     } catch {
-      setItemError('Não foi possível apagar o item.')
+      setItemError(t.itemDetails.deleteError)
     } finally {
       setIsSavingItem(false)
     }
@@ -417,7 +412,7 @@ export function WorkspaceBoardPage() {
   if (isLoading && isValidWorkspaceId) {
     return (
       <AuthenticatedLayout>
-        <PageLoader label="Carregando quadro..." />
+        <PageLoader label={t.board.loading} />
       </AuthenticatedLayout>
     )
   }
@@ -431,7 +426,7 @@ export function WorkspaceBoardPage() {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              Workspace
+              {t.common.workspace}
             </Link>
             {workspace && isEditingWorkspaceName ? (
               <input
@@ -442,7 +437,7 @@ export function WorkspaceBoardPage() {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') event.currentTarget.blur()
                 }}
-                aria-label="Nome do workspace"
+                aria-label={t.common.name}
                 disabled={isSavingWorkspaceName}
                 autoFocus
               />
@@ -459,20 +454,20 @@ export function WorkspaceBoardPage() {
                 </svg>
               </button>
             ) : (
-              <h1>Quadro Kanban</h1>
+              <h1>{t.board.title}</h1>
             )}
-            <p>Arraste os cards para organizar o fluxo de trabalho.</p>
+            <p>{t.board.subtitle}</p>
             {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
           <div className="board-heading-actions">
             <div className="view-mode-control">
-              <span>Kanban</span>
+              <span>{t.common.kanban}</span>
               <button
                 className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
                 type="button"
                 role="switch"
                 aria-checked={Boolean(workspace?.isKanbanViewMode)}
-                aria-label="Alternar visualizaÃ§Ã£o Kanban"
+                aria-label={t.workspaceModal.toggleKanban}
                 disabled={!workspace || isSavingViewMode}
                 onClick={() => void handleViewModeChange()}
               >
@@ -485,13 +480,13 @@ export function WorkspaceBoardPage() {
               disabled={columns.length === 0}
               onClick={() => openCreateItemModal()}
             >
-              + Novo item
+              {t.common.createItem}
             </button>
             <button
               className="board-settings-button"
               type="button"
-              aria-label="Configurar colunas"
-              title="Configurar colunas"
+              aria-label={t.common.configureColumns}
+              title={t.common.configureColumns}
               onClick={() => setIsSettingsOpen(true)}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -504,7 +499,7 @@ export function WorkspaceBoardPage() {
 
         {(!isValidWorkspaceId || errorMessage) ? (
           <div className="state-card error-state">
-            <p>{errorMessage ?? 'Workspace invÃ¡lido.'}</p>
+            <p>{errorMessage ?? t.board.invalidWorkspace}</p>
           </div>
         ) : null}
 
@@ -512,14 +507,14 @@ export function WorkspaceBoardPage() {
 
         {!errorMessage && columns.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhuma coluna ainda</h2>
-            <p>Crie listas para comeÃ§ar a usar o quadro.</p>
+            <h2>{t.board.emptyTitle}</h2>
+            <p>{t.board.emptyDescription}</p>
           </div>
         ) : null}
 
         {!errorMessage && columns.length > 0 ? (
           <DragDropContext onDragEnd={(result) => void handleDragEnd(result)}>
-            <section className="kanban-board" aria-label="Quadro Kanban">
+            <section className="kanban-board" aria-label={t.board.boardLabel}>
               {columns.map((column) => (
                 <article className="kanban-column" key={column.id}>
                   <header className="kanban-column-header">
@@ -536,7 +531,7 @@ export function WorkspaceBoardPage() {
                         {...provided.droppableProps}
                       >
                         {column.hasError ? (
-                          <p className="kanban-column-error">Falha ao carregar os cards.</p>
+                          <p className="kanban-column-error">{t.board.columnLoadError}</p>
                         ) : null}
 
                         {column.items.map((item, index) => (
@@ -551,7 +546,7 @@ export function WorkspaceBoardPage() {
                               >
                                 <h3>{item.name}</h3>
                                 <span className={`priority priority-${item.priority.toLocaleLowerCase()}`}>
-                                  {PRIORITY_LABELS[item.priority]}
+                                  {t.priorities[item.priority]}
                                 </span>
                               </article>
                             )}
@@ -565,7 +560,7 @@ export function WorkspaceBoardPage() {
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M12 5v14M5 12h14" />
                           </svg>
-                          Adicionar item
+                          {t.board.addItem}
                         </button>
                         {provided.placeholder}
                       </div>
@@ -635,4 +630,3 @@ export function WorkspaceBoardPage() {
     </AuthenticatedLayout>
   )
 }
-

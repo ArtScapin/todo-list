@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useI18n } from '../i18n'
 import type { KanbanList } from '../services/api/lists'
 import './WorkspaceModal.css'
 
@@ -22,6 +23,7 @@ type ListModalProps = {
 }
 
 export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: ListModalProps) {
+  const { t } = useI18n()
   const [name, setName] = useState(list?.name ?? '')
   const [color, setColor] = useState(list?.color ?? '#2563eb')
 
@@ -51,23 +53,23 @@ export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: L
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 id="list-modal-title">{list ? 'Editar lista' : 'Nova lista'}</h2>
-          <button type="button" aria-label="Fechar modal" onClick={onClose}>×</button>
+          <h2 id="list-modal-title">{list ? t.listModal.editTitle : t.listModal.createTitle}</h2>
+          <button type="button" aria-label={t.common.close} onClick={onClose}>&times;</button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <label htmlFor="list-name">Nome</label>
+          <label htmlFor="list-name">{t.common.name}</label>
           <input
             id="list-name"
             type="text"
-            placeholder="Ex.: Em andamento"
+            placeholder={t.listModal.placeholder}
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoFocus
             required
           />
 
-          <span className="color-label" id="list-color-label">Cor</span>
+          <span className="color-label" id="list-color-label">{t.listModal.color}</span>
           <div className="color-palette" role="radiogroup" aria-labelledby="list-color-label">
             {LIST_COLORS.map((option) => (
               <button
@@ -76,11 +78,11 @@ export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: L
                 type="button"
                 role="radio"
                 aria-checked={color === option}
-                aria-label={`Selecionar cor ${option}`}
+                aria-label={t.listModal.selectColor(option)}
                 style={{ backgroundColor: option }}
                 onClick={() => setColor(option)}
               >
-                {color === option ? <span aria-hidden="true">✓</span> : null}
+                {color === option ? <span aria-hidden="true">{'\u2713'}</span> : null}
               </button>
             ))}
           </div>
@@ -89,10 +91,10 @@ export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: L
 
           <div className="modal-actions">
             <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>
-              Cancelar
+              {t.common.cancel}
             </button>
             <button className="primary-button" type="submit" disabled={isSaving || !name.trim()}>
-              {isSaving ? 'Salvando...' : list ? 'Salvar lista' : 'Criar lista'}
+              {isSaving ? t.common.saving : list ? t.listModal.save : t.listModal.create}
             </button>
           </div>
         </form>

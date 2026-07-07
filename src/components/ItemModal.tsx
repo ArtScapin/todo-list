@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useI18n } from '../i18n'
 import type { Item, Priority } from '../services/api/items'
 import './WorkspaceModal.css'
 
@@ -25,13 +26,6 @@ type ItemModalProps = {
   onSubmit: (data: ItemFormData) => Promise<void>
 }
 
-const PRIORITY_LABELS: Record<Priority, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'M\u00e9dia',
-  HIGH: 'Alta',
-  CRITICAL: 'Cr\u00edtica',
-}
-
 const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
 
 const PRIORITY_COLORS: Record<Priority, string> = {
@@ -51,6 +45,7 @@ export function ItemModal({
   selectedListId = null,
   onSubmit,
 }: ItemModalProps) {
+  const { t } = useI18n()
   const [name, setName] = useState(item?.name ?? '')
   const [description, setDescription] = useState(item?.description ?? '')
   const [priority, setPriority] = useState<Priority>(item?.priority ?? 'MEDIUM')
@@ -99,34 +94,34 @@ export function ItemModal({
         <form className="item-editor-form" onSubmit={handleSubmit}>
           <div className="modal-header">
             <div className="editable-detail-title">
-              <h2 id="item-modal-title">{item ? 'Editar item' : 'Novo item'}</h2>
+              <h2 id="item-modal-title">{item ? t.itemModal.editTitle : t.itemModal.createTitle}</h2>
             </div>
             <div className="item-details-actions">
-              <button type="button" aria-label="Fechar modal" onClick={onClose}>&times;</button>
+              <button type="button" aria-label={t.common.close} onClick={onClose}>&times;</button>
             </div>
           </div>
 
           <div className="item-details-grid item-editor-grid">
             <div className="item-editor-field">
-              <span>Nome</span>
+              <span>{t.common.name}</span>
               <input
                 id="item-name"
                 type="text"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="O que precisa ser feito?"
+                placeholder={t.itemModal.namePlaceholder}
                 autoFocus
                 required
               />
             </div>
 
             <div className="editable-description-block item-editor-field">
-              <span>Descri\u00e7\u00e3o</span>
+              <span>{t.common.description}</span>
               <textarea
                 id="item-description"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Detalhes opcionais"
+                placeholder={t.itemModal.optionalDetails}
                 rows={5}
               />
             </div>
@@ -141,7 +136,7 @@ export function ItemModal({
                   }
                 }}
               >
-                <span>Prioridade</span>
+                <span>{t.common.priority}</span>
                 <button
                   className="priority-combo-trigger"
                   type="button"
@@ -150,7 +145,7 @@ export function ItemModal({
                   aria-expanded={isPriorityOpen}
                   disabled={isSaving}
                 >
-                  {PRIORITY_LABELS[priority]}
+                  {t.priorities[priority]}
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 9 6 6 6-6" />
                   </svg>
@@ -174,7 +169,7 @@ export function ItemModal({
                           style={{ '--priority-option-color': PRIORITY_COLORS[currentPriority] } as CSSProperties}
                           aria-hidden="true"
                         />
-                        {PRIORITY_LABELS[currentPriority]}
+                        {t.priorities[currentPriority]}
                       </button>
                     ))}
                   </div>
@@ -191,7 +186,7 @@ export function ItemModal({
                     }
                   }}
                 >
-                  <span>Lista</span>
+                  <span>{t.common.list}</span>
                   <button
                     className="priority-combo-trigger"
                     type="button"
@@ -200,7 +195,7 @@ export function ItemModal({
                     aria-expanded={isListOpen}
                     disabled={isSaving}
                   >
-                    {currentList?.name ?? 'Selecionar lista'}
+                    {currentList?.name ?? t.itemModal.selectList}
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="m6 9 6 6 6-6" />
                     </svg>
@@ -242,7 +237,7 @@ export function ItemModal({
                     }
                   }}
                 >
-                  <span>Status</span>
+                  <span>{t.common.status}</span>
                   <button
                     className="priority-combo-trigger"
                     type="button"
@@ -251,7 +246,7 @@ export function ItemModal({
                     aria-expanded={isStatusOpen}
                     disabled={isSaving}
                   >
-                    {status ? 'Conclu\u00eddo' : 'Pendente'}
+                    {status ? t.itemModal.done : t.common.pending}
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="m6 9 6 6 6-6" />
                     </svg>
@@ -273,7 +268,7 @@ export function ItemModal({
                           style={{ '--priority-option-color': '#94a3b8' } as CSSProperties}
                           aria-hidden="true"
                         />
-                        Pendente
+                        {t.common.pending}
                       </button>
                       <button
                         className={status ? 'selected' : ''}
@@ -290,7 +285,7 @@ export function ItemModal({
                           style={{ '--priority-option-color': '#22c55e' } as CSSProperties}
                           aria-hidden="true"
                         />
-                        Conclu\u00eddo
+                        {t.itemModal.done}
                       </button>
                     </div>
                   ) : null}
@@ -302,14 +297,14 @@ export function ItemModal({
 
             <div className="modal-actions item-editor-actions">
               <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>
-                Cancelar
+                {t.common.cancel}
               </button>
               <button
                 className="primary-button"
                 type="submit"
                 disabled={isSaving || !name.trim() || (lists.length > 0 && listId === null)}
               >
-                {isSaving ? 'Salvando...' : 'Salvar item'}
+                {isSaving ? t.common.saving : t.itemModal.save}
               </button>
             </div>
           </div>

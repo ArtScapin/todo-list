@@ -4,6 +4,7 @@ import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { ItemModal } from '../components/ItemModal'
 import { PageLoader } from '../components/PageLoader'
+import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
 import {
   changeItemStatus,
@@ -18,14 +19,8 @@ import { getList, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/items.css'
 
-const PRIORITY_LABELS: Record<Priority, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  CRITICAL: 'Crítica',
-}
-
 export function ItemsPage() {
+  const { t } = useI18n()
   const { workspaceId, listId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
   const parsedListId = Number(listId)
@@ -71,7 +66,7 @@ export function ItemsPage() {
         setItems(itemsData.sort((first, second) => first.position - second.position))
       } catch {
         if (!controller.signal.aborted) {
-          setLoadError('Não foi possível carregar esta lista.')
+          setLoadError(t.items.loadError)
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -82,7 +77,7 @@ export function ItemsPage() {
 
     void loadPage()
     return () => controller.abort()
-  }, [hasValidIds, parsedListId, parsedWorkspaceId])
+  }, [hasValidIds, parsedListId, parsedWorkspaceId, t.items.loadError])
 
   const filteredItems = items.filter((item) => {
     const search = searchValue.trim().toLocaleLowerCase()
@@ -90,7 +85,7 @@ export function ItemsPage() {
       || item.description?.toLocaleLowerCase().includes(search)
   })
   const pendingItemsCount = items.filter((item) => !item.status).length
-  const pageError = hasValidIds ? loadError : 'Lista inválida.'
+  const pageError = hasValidIds ? loadError : t.items.invalidList
 
   function closeModal() {
     setIsModalOpen(false)
@@ -149,8 +144,8 @@ export function ItemsPage() {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined
       setSaveError(
         hasApiResponse
-          ? 'Não foi possível salvar o item. Verifique os dados informados.'
-          : 'Não conseguimos conectar à API. Tente novamente em instantes.',
+          ? t.items.saveError
+          : t.items.saveApiError,
       )
     } finally {
       setIsSaving(false)
@@ -169,7 +164,7 @@ export function ItemsPage() {
           : currentItem
       )))
     } catch {
-      setActionError('Não foi possível alterar o estado do item.')
+      setActionError(t.items.statusError)
     } finally {
       setBusyItemIds((current) => {
         const next = new Set(current)
@@ -188,7 +183,7 @@ export function ItemsPage() {
       setItems((current) => current.filter((currentItem) => currentItem.id !== item.id))
       setItemToDelete(null)
     } catch {
-      setActionError('Não foi possível excluir o item.')
+      setActionError(t.items.deleteError)
     } finally {
       setBusyItemIds((current) => {
         const next = new Set(current)
@@ -223,7 +218,7 @@ export function ItemsPage() {
       setListName(updatedList.name)
     } catch {
       setListName(list.name)
-      setListNameError('Não foi possível atualizar o nome da lista.')
+      setListNameError(t.items.renameError)
     } finally {
       setIsSavingListName(false)
       setIsEditingListName(false)
@@ -234,12 +229,12 @@ export function ItemsPage() {
     return (
       <AuthenticatedLayout
         searchValue={searchValue}
-        searchLabel="Buscar itens"
-        searchPlaceholder="Buscar item..."
+        searchLabel={t.items.searchLabel}
+        searchPlaceholder={t.items.searchPlaceholder}
         onSearchChange={setSearchValue}
       >
         <main className="workspaces-content">
-          <PageLoader label="Carregando lista..." />
+          <PageLoader label={t.items.loadingList} />
         </main>
       </AuthenticatedLayout>
     )
@@ -248,8 +243,8 @@ export function ItemsPage() {
   return (
     <AuthenticatedLayout
       searchValue={searchValue}
-      searchLabel="Buscar itens"
-      searchPlaceholder="Buscar item..."
+      searchLabel={t.items.searchLabel}
+      searchPlaceholder={t.items.searchPlaceholder}
       onSearchChange={setSearchValue}
     >
       <main className="workspaces-content">
@@ -264,7 +259,7 @@ export function ItemsPage() {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              {workspace?.name ?? 'Listas'}
+              {workspace?.name ?? t.common.workspace}
             </Link>
             {list && isEditingListName ? (
               <input
@@ -275,7 +270,7 @@ export function ItemsPage() {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') event.currentTarget.blur()
                 }}
-                aria-label="Nome da lista"
+                aria-label={t.common.name}
                 disabled={isSavingListName}
                 autoFocus
               />
@@ -292,13 +287,11 @@ export function ItemsPage() {
                 </svg>
               </button>
             ) : null}
-            <p>
-              {pendingItemsCount} {pendingItemsCount === 1 ? 'item pendente' : 'itens pendentes'}
-            </p>
+            <p>{t.items.pendingCount(pendingItemsCount)}</p>
             {listNameError ? <span className="list-name-error" role="alert">{listNameError}</span> : null}
           </div>
           <button className="primary-button" type="button" disabled={!list} onClick={openCreateModal}>
-            + Novo item
+            {t.items.newItem}
           </button>
         </div>
 
@@ -310,20 +303,20 @@ export function ItemsPage() {
 
         {!isLoading && !pageError && items.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhum item ainda</h2>
-            <p>Adicione o primeiro item desta lista.</p>
+            <h2>{t.items.emptyTitle}</h2>
+            <p>{t.items.emptyDescription}</p>
           </div>
         ) : null}
 
         {!isLoading && !pageError && items.length > 0 && filteredItems.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhum resultado</h2>
-            <p>Não encontramos um item com esse texto.</p>
+            <h2>{t.common.noResults}</h2>
+            <p>{t.items.noResults}</p>
           </div>
         ) : null}
 
         {!isLoading && !pageError && filteredItems.length > 0 ? (
-          <section className="todo-list" aria-label="Itens da lista">
+          <section className="todo-list" aria-label={t.items.listAria}>
             {filteredItems.map((item) => {
               const isBusy = busyItemIds.has(item.id)
 
@@ -332,24 +325,24 @@ export function ItemsPage() {
                   <button
                     className="status-button"
                     type="button"
-                    aria-label={item.status ? `Reabrir ${item.name}` : `Concluir ${item.name}`}
+                    aria-label={item.status ? t.items.reopenItem(item.name) : t.items.completeItem(item.name)}
                     disabled={isBusy}
                     onClick={() => void handleChangeStatus(item)}
                   >
-                    {item.status ? '✓' : ''}
+                    {item.status ? '\u2713' : ''}
                   </button>
                   <div className="todo-item-content">
                     <h2>{item.name}</h2>
                     {item.description ? <p>{item.description}</p> : null}
                     <span className={`priority priority-${item.priority.toLocaleLowerCase()}`}>
-                      {PRIORITY_LABELS[item.priority]}
+                      {t.priorities[item.priority]}
                     </span>
                   </div>
                   <div className="todo-item-actions">
                     <button
                       type="button"
-                      aria-label={`Editar ${item.name}`}
-                      title="Editar"
+                      aria-label={t.items.editItem(item.name)}
+                      title={t.common.edit}
                       disabled={isBusy}
                       onClick={() => openEditModal(item)}
                     >
@@ -361,8 +354,8 @@ export function ItemsPage() {
                     <button
                       className="delete-action"
                       type="button"
-                      aria-label={`Excluir ${item.name}`}
-                      title="Excluir"
+                      aria-label={t.items.deleteItem(item.name)}
+                      title={t.common.delete}
                       disabled={isBusy}
                       onClick={() => setItemToDelete(item)}
                     >
@@ -391,8 +384,8 @@ export function ItemsPage() {
 
       {itemToDelete ? (
         <ConfirmModal
-          title="Excluir item"
-          message={`Tem certeza que deseja excluir “${itemToDelete.name}”? Esta ação não pode ser desfeita.`}
+          title={t.items.deleteTitle}
+          message={t.items.deleteMessage(itemToDelete.name)}
           isConfirming={busyItemIds.has(itemToDelete.id)}
           onCancel={() => setItemToDelete(null)}
           onConfirm={() => void handleDeleteItem(itemToDelete)}

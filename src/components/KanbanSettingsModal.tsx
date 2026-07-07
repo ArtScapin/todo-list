@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
+import { useI18n } from '../i18n'
 import type { KanbanList } from '../services/api/lists'
 import './KanbanSettingsModal.css'
 
@@ -27,6 +28,7 @@ export function KanbanSettingsModal({
   onUpdate,
   onReorder,
 }: KanbanSettingsModalProps) {
+  const { t } = useI18n()
   const [newColumnName, setNewColumnName] = useState('')
   const [editingColumnId, setEditingColumnId] = useState<number | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -72,21 +74,21 @@ export function KanbanSettingsModal({
       >
         <div className="modal-header">
           <div>
-            <h2 id="kanban-settings-title">Configurar colunas</h2>
-            <p>Adicione, edite ou arraste para reorganizar.</p>
+            <h2 id="kanban-settings-title">{t.kanbanSettings.title}</h2>
+            <p>{t.kanbanSettings.subtitle}</p>
           </div>
-          <button type="button" aria-label="Fechar modal" disabled={isSaving} onClick={onClose}>×</button>
+          <button type="button" aria-label={t.common.close} disabled={isSaving} onClick={onClose}>&times;</button>
         </div>
 
         <form className="new-column-form" onSubmit={handleCreate}>
           <input
-            aria-label="Nome da nova coluna"
-            placeholder="Nome da nova coluna"
+            aria-label={t.kanbanSettings.newColumnName}
+            placeholder={t.kanbanSettings.newColumnName}
             value={newColumnName}
             onChange={(event) => setNewColumnName(event.target.value)}
           />
           <button className="primary-button" type="submit" disabled={isSaving || !newColumnName.trim()}>
-            Adicionar
+            {t.kanbanSettings.add}
           </button>
         </form>
 
@@ -104,25 +106,25 @@ export function KanbanSettingsModal({
                         ref={dragProvided.innerRef}
                         {...dragProvided.draggableProps}
                       >
-                        <span className="column-drag-handle" {...dragProvided.dragHandleProps} aria-label={`Mover ${column.name}`}>
-                          ⋮⋮
+                        <span className="column-drag-handle" {...dragProvided.dragHandleProps} aria-label={t.kanbanSettings.moveColumn(column.name)}>
+                          {'\u22ee\u22ee'}
                         </span>
 
                         {editingColumnId === column.id ? (
                           <div className="column-edit-fields">
                             <input
-                              aria-label={`Nome da coluna ${column.name}`}
+                              aria-label={t.kanbanSettings.columnName(column.name)}
                               value={editingName}
                               onChange={(event) => setEditingName(event.target.value)}
                               autoFocus
                             />
-                            <div className="column-color-options" aria-label="Cor da coluna">
+                            <div className="column-color-options" aria-label={t.kanbanSettings.columnColor}>
                               {COLUMN_COLORS.map((color) => (
                                 <button
                                   className={editingColor === color ? 'selected' : ''}
                                   type="button"
                                   key={color}
-                                  aria-label={`Selecionar cor ${color}`}
+                                  aria-label={t.listModal.selectColor(color)}
                                   style={{ backgroundColor: color }}
                                   onClick={() => setEditingColor(color)}
                                 />
@@ -138,12 +140,12 @@ export function KanbanSettingsModal({
 
                         {editingColumnId === column.id ? (
                           <div className="column-row-actions">
-                            <button type="button" disabled={isSaving} onClick={() => setEditingColumnId(null)}>Cancelar</button>
-                            <button type="button" disabled={isSaving || !editingName.trim()} onClick={() => void saveEditing(column)}>Salvar</button>
+                            <button type="button" disabled={isSaving} onClick={() => setEditingColumnId(null)}>{t.common.cancel}</button>
+                            <button type="button" disabled={isSaving || !editingName.trim()} onClick={() => void saveEditing(column)}>{t.common.save}</button>
                           </div>
                         ) : (
                           <button className="column-edit-action" type="button" disabled={isSaving} onClick={() => startEditing(column)}>
-                            Editar
+                            {t.kanbanSettings.edit}
                           </button>
                         )}
                       </div>

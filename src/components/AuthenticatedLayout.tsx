@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from '../i18n'
 import { clearCurrentUserCache, getCurrentUser } from '../services/api/users'
 import { removeTokens } from '../services/auth-storage'
+import { applyTheme, getStoredTheme } from '../services/theme'
 import { Toolbar } from './Toolbar'
 import '../styles/workspaces.css'
-
-const THEME_KEY = 'todo-list:theme'
 
 type AuthenticatedLayoutProps = {
   children: ReactNode
@@ -22,11 +22,10 @@ export function AuthenticatedLayout({
   searchLabel,
   searchPlaceholder,
 }: AuthenticatedLayoutProps) {
+  const { locale, setLocale, t } = useI18n()
   const navigate = useNavigate()
   const [userName, setUserName] = useState('')
-  const [isDarkTheme, setIsDarkTheme] = useState(
-    () => localStorage.getItem(THEME_KEY) === 'dark',
-  )
+  const [isDarkTheme, setIsDarkTheme] = useState(() => getStoredTheme() === 'dark')
 
   useEffect(() => {
     let isActive = true
@@ -36,7 +35,7 @@ export function AuthenticatedLayout({
         const user = await getCurrentUser()
         if (isActive) setUserName(user.name)
       } catch {
-        if (isActive) setUserName('Usuário')
+        if (isActive) setUserName(t.common.userFallback)
       }
     }
 
@@ -44,15 +43,10 @@ export function AuthenticatedLayout({
     return () => {
       isActive = false
     }
-  }, [])
+  }, [t.common.userFallback])
 
   useEffect(() => {
-    document.documentElement.dataset.theme = isDarkTheme ? 'dark' : 'light'
-    localStorage.setItem(THEME_KEY, isDarkTheme ? 'dark' : 'light')
-
-    return () => {
-      delete document.documentElement.dataset.theme
-    }
+    applyTheme(isDarkTheme ? 'dark' : 'light')
   }, [isDarkTheme])
 
   function handleLogout() {
@@ -65,6 +59,8 @@ export function AuthenticatedLayout({
     <div className="workspaces-page">
       <Toolbar
         isDarkTheme={isDarkTheme}
+        locale={locale}
+        onLocaleChange={setLocale}
         userName={userName}
         searchValue={searchValue}
         searchLabel={searchLabel}

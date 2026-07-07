@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useI18n } from '../i18n'
 import './WorkspaceModal.css'
 
 type ConfirmModalProps = {
@@ -16,6 +17,8 @@ export function ConfirmModal({
   onCancel,
   onConfirm,
 }: ConfirmModalProps) {
+  const { t } = useI18n()
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape' && !isConfirming) {
@@ -43,15 +46,15 @@ export function ConfirmModal({
       >
         <div className="modal-header">
           <h2 id="confirm-modal-title">{title}</h2>
-          <button type="button" aria-label="Fechar modal" disabled={isConfirming} onClick={onCancel}>×</button>
+          <button type="button" aria-label={t.confirm.close} disabled={isConfirming} onClick={onCancel}>&times;</button>
         </div>
         <p id="confirm-modal-message">{message}</p>
         <div className="modal-actions">
           <button className="secondary-button" type="button" disabled={isConfirming} onClick={onCancel}>
-            Cancelar
+            {t.common.cancel}
           </button>
           <button className="danger-button" type="button" disabled={isConfirming} onClick={onConfirm}>
-            {isConfirming ? 'Excluindo...' : 'Excluir'}
+            {isConfirming ? t.confirm.deleting : t.common.delete}
           </button>
         </div>
       </section>

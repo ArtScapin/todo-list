@@ -1,8 +1,12 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useI18n } from '../i18n'
+import { AuthLocaleSelect } from '../components/AuthLocaleSelect'
 import { login } from '../services/api/auth'
 import { ApiError } from '../services/api/api'
 import { saveTokens } from '../services/auth-storage'
+import { applyTheme, getStoredTheme } from '../services/theme'
+import { ThemeSwitch } from '../components/ThemeSwitch'
 import '../styles/auth.css'
 
 type Feedback = {
@@ -10,11 +14,17 @@ type Feedback = {
 } | null
 
 export function LoginPage() {
+  const { locale, setLocale, t } = useI18n()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState<Feedback>(null)
+  const [isDarkTheme, setIsDarkTheme] = useState(() => getStoredTheme() === 'dark')
+
+  useEffect(() => {
+    applyTheme(isDarkTheme ? 'dark' : 'light')
+  }, [isDarkTheme])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -26,7 +36,7 @@ export function LoginPage() {
 
       if (!data.token || !data.refreshToken) {
         setFeedback({
-          message: 'A resposta da API não trouxe tokens válidos. Tente novamente.',
+          message: t.auth.invalidTokens,
         })
         return
       }
@@ -38,8 +48,8 @@ export function LoginPage() {
 
       setFeedback({
         message: hasApiResponse
-          ? 'Usuário ou senha incorretos. Confira os dados e tente novamente.'
-          : 'Não conseguimos conectar à API. Verifique se o servidor está disponível.',
+          ? t.auth.invalidCredentials
+          : t.auth.apiUnavailable,
       })
     } finally {
       setIsLoading(false)
@@ -50,31 +60,31 @@ export function LoginPage() {
     <main className="login-page">
       <section className="login-card" aria-labelledby="login-title">
         <header className="login-header">
-          <span className="brand-mark" aria-hidden="true">✓</span>
-          <h1 id="login-title">ToDo List</h1>
-          <p>Entre para organizar suas tarefas.</p>
+          <span className="brand-mark" aria-hidden="true">{'\u2713'}</span>
+          <h1 id="login-title">{t.auth.loginTitle}</h1>
+          <p>{t.auth.loginSubtitle}</p>
         </header>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username">{t.auth.username}</label>
           <input
             id="username"
             name="username"
             type="text"
             autoComplete="username"
-            placeholder="Digite seu username"
+            placeholder={t.auth.usernamePlaceholder}
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             required
           />
 
-          <label htmlFor="password">Senha</label>
+          <label htmlFor="password">{t.auth.password}</label>
           <input
             id="password"
             name="password"
             type="password"
             autoComplete="current-password"
-            placeholder="Digite sua senha"
+            placeholder={t.auth.passwordPlaceholder}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -87,13 +97,25 @@ export function LoginPage() {
           ) : null}
 
           <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Entrar'}
+            {isLoading ? t.auth.loggingIn : t.auth.login}
           </button>
 
           <p className="form-navigation">
-            Ainda não possui uma conta? <Link to="/register">Cadastre-se</Link>
+            {t.auth.noAccount} <Link to="/register">{t.auth.registerLink}</Link>
           </p>
         </form>
+
+        <div className="auth-preferences">
+          <ThemeSwitch
+            isDarkTheme={isDarkTheme}
+            ariaLabel={t.toolbar.toggleTheme}
+            onToggle={() => setIsDarkTheme((current) => !current)}
+          />
+          <AuthLocaleSelect
+            locale={locale}
+            onLocaleChange={setLocale}
+          />
+        </div>
       </section>
     </main>
   )

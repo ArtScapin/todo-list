@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { WorkspaceModal } from '../components/WorkspaceModal'
+import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
 import {
   createWorkspace,
@@ -10,6 +11,7 @@ import {
 } from '../services/api/workspaces'
 
 export function WorkspacesPage() {
+  const { t } = useI18n()
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -27,14 +29,14 @@ export function WorkspacesPage() {
       setWorkspaces(data)
     } catch (error) {
       if (!signal?.aborted && !(error instanceof ApiError && error.status === 401)) {
-        setLoadError('Não foi possível carregar seus workspaces. Tente novamente.')
+        setLoadError(t.workspaces.loadError)
       }
     } finally {
       if (!signal?.aborted) {
         setIsLoading(false)
       }
     }
-  }, [])
+  }, [t.workspaces.loadError])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -45,7 +47,7 @@ export function WorkspacesPage() {
         setWorkspaces(data)
       } catch (error) {
         if (!controller.signal.aborted && !(error instanceof ApiError && error.status === 401)) {
-          setLoadError('Não foi possível carregar seus workspaces. Tente novamente.')
+          setLoadError(t.workspaces.loadError)
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -56,7 +58,7 @@ export function WorkspacesPage() {
 
     void loadInitialWorkspaces()
     return () => controller.abort()
-  }, [])
+  }, [t.workspaces.loadError])
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false)
@@ -75,8 +77,8 @@ export function WorkspacesPage() {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined
       setSaveError(
         hasApiResponse
-          ? 'Não foi possível criar o workspace. Verifique o nome informado.'
-          : 'Não conseguimos conectar à API. Tente novamente em instantes.',
+          ? t.workspaces.createError
+          : t.workspaces.createApiError,
       )
     } finally {
       setIsSaving(false)
@@ -89,49 +91,49 @@ export function WorkspacesPage() {
 
   return (
     <AuthenticatedLayout
-        searchValue={searchValue}
-        searchLabel="Buscar workspaces"
-        searchPlaceholder="Buscar workspace..."
-        onSearchChange={setSearchValue}
+      searchValue={searchValue}
+      searchLabel={t.workspaces.searchLabel}
+      searchPlaceholder={t.workspaces.searchPlaceholder}
+      onSearchChange={setSearchValue}
     >
       <main className="workspaces-content">
         <div className="workspaces-heading">
           <div>
-            <p className="eyebrow">Seus projetos</p>
-            <h1>Workspaces</h1>
+            <p className="eyebrow">{t.workspaces.eyebrow}</p>
+            <h1>{t.workspaces.title}</h1>
           </div>
           <button className="primary-button" type="button" onClick={() => setIsModalOpen(true)}>
-            + Novo workspace
+            {t.common.createWorkspace}
           </button>
         </div>
 
-        {isLoading ? <div className="state-card">Carregando workspaces...</div> : null}
+        {isLoading ? <div className="state-card">{t.workspaces.loading}</div> : null}
 
         {!isLoading && loadError ? (
           <div className="state-card error-state">
             <p>{loadError}</p>
             <button className="secondary-button" type="button" onClick={() => void loadWorkspaces()}>
-              Tentar novamente
+              {t.common.retry}
             </button>
           </div>
         ) : null}
 
         {!isLoading && !loadError && workspaces.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhum workspace ainda</h2>
-            <p>Crie seu primeiro workspace para começar a organizar as tarefas.</p>
+            <h2>{t.workspaces.emptyTitle}</h2>
+            <p>{t.workspaces.emptyDescription}</p>
           </div>
         ) : null}
 
         {!isLoading && !loadError && workspaces.length > 0 && filteredWorkspaces.length === 0 ? (
           <div className="state-card empty-state">
-            <h2>Nenhum resultado</h2>
-            <p>Não encontramos um workspace com esse nome.</p>
+            <h2>{t.common.noResults}</h2>
+            <p>{t.workspaces.noResults}</p>
           </div>
         ) : null}
 
         {!isLoading && !loadError && filteredWorkspaces.length > 0 ? (
-          <section className="workspace-grid" aria-label="Lista de workspaces">
+          <section className="workspace-grid" aria-label={t.workspaces.gridLabel}>
             {filteredWorkspaces.map((workspace) => (
               <Link
                 className="workspace-card"
@@ -140,7 +142,7 @@ export function WorkspacesPage() {
               >
                 <span className="workspace-icon" aria-hidden="true">W</span>
                 <h2>{workspace.name}</h2>
-                <p>{workspace.isKanbanViewMode ? 'Kanban' : 'Todo List'}</p>
+                <p>{workspace.isKanbanViewMode ? t.common.kanban : t.common.listMode}</p>
               </Link>
             ))}
           </section>

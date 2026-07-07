@@ -5,6 +5,7 @@ import { ItemsPage } from './pages/ItemsPage'
 import { WorkspaceBoardPage } from './pages/WorkspaceBoardPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { I18nProvider } from './i18n'
 import { hasStoredSession } from './services/auth-storage'
 import './App.css'
 
@@ -14,25 +15,27 @@ function ProtectedRoute() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={hasStoredSession() ? <Navigate to="/workspaces" replace /> : <LoginPage />}
-        />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/workspaces" element={<WorkspacesPage />} />
-          <Route path="/workspaces/:workspaceId/lists" element={<ListsPage />} />
-          <Route path="/workspaces/:workspaceId/lists/:listId" element={<ItemsPage />} />
-          <Route path="/workspaces/:workspaceId/board" element={<WorkspaceBoardPage />} />
-        </Route>
-        <Route
-          path="*"
-          element={<Navigate to={hasStoredSession() ? '/workspaces' : '/login'} replace />}
-        />
-      </Routes>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={hasStoredSession() ? <Navigate to="/workspaces" replace /> : <LoginPage />}
+          />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/workspaces" element={<WorkspacesPage />} />
+            <Route path="/workspaces/:workspaceId/lists" element={<ListsPage />} />
+            <Route path="/workspaces/:workspaceId/lists/:listId" element={<ItemsPage />} />
+            <Route path="/workspaces/:workspaceId/board" element={<WorkspaceBoardPage />} />
+          </Route>
+          <Route
+            path="*"
+            element={<Navigate to={hasStoredSession() ? '/workspaces' : '/login'} replace />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
   )
 }
 

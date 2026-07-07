@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useI18n } from '../i18n'
 import './WorkspaceModal.css'
 
 type WorkspaceModalProps = {
@@ -16,6 +17,7 @@ export function WorkspaceModal({
   onClose,
   onSubmit,
 }: WorkspaceModalProps) {
+  const { t } = useI18n()
   const [name, setName] = useState('')
   const [isKanbanViewMode, setIsKanbanViewMode] = useState(false)
 
@@ -53,16 +55,16 @@ export function WorkspaceModal({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 id="workspace-modal-title">Novo workspace</h2>
-          <button type="button" aria-label="Fechar modal" onClick={onClose}>×</button>
+          <h2 id="workspace-modal-title">{t.workspaceModal.title}</h2>
+          <button type="button" aria-label={t.common.close} onClick={onClose}>&times;</button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <label htmlFor="workspace-name">Nome</label>
+          <label htmlFor="workspace-name">{t.common.name}</label>
           <input
             id="workspace-name"
             type="text"
-            placeholder="Ex.: Projeto pessoal"
+            placeholder={t.workspaceModal.placeholder}
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoFocus
@@ -71,15 +73,15 @@ export function WorkspaceModal({
 
           <div className="workspace-mode-option">
             <div>
-              <strong>Modo Kanban</strong>
-              <span>Organize listas como colunas e mova cards entre elas.</span>
+              <strong>{t.workspaceModal.kanbanTitle}</strong>
+              <span>{t.workspaceModal.kanbanDescription}</span>
             </div>
             <button
               className={`theme-switch ${isKanbanViewMode ? 'active' : ''}`}
               type="button"
               role="switch"
               aria-checked={isKanbanViewMode}
-              aria-label="Ativar visualização Kanban"
+              aria-label={t.workspaceModal.toggleKanban}
               onClick={() => setIsKanbanViewMode((current) => !current)}
             >
               <span />
@@ -90,10 +92,10 @@ export function WorkspaceModal({
 
           <div className="modal-actions">
             <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>
-              Cancelar
+              {t.common.cancel}
             </button>
             <button className="primary-button" type="submit" disabled={isSaving || !name.trim()}>
-              {isSaving ? 'Criando...' : 'Criar workspace'}
+              {isSaving ? t.workspaceModal.creating : t.workspaceModal.create}
             </button>
           </div>
         </form>

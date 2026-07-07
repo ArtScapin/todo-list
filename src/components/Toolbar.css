@@ -189,34 +189,6 @@
   font-weight: 650;
 }
 
-.theme-switch {
-  width: 42px;
-  height: 24px;
-  padding: 3px;
-  border: 0;
-  border-radius: 20px;
-  background: #cbd5e1;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.theme-switch span {
-  display: block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
-  transition: transform 0.2s;
-}
-
-.theme-switch.active {
-  background: #2563eb;
-}
-
-.theme-switch.active span {
-  transform: translateX(18px);
-}
 
 .menu-logout {
   width: 100%;
