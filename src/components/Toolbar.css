@@ -115,21 +115,55 @@
 .menu-button {
   width: 42px;
   height: 42px;
-  display: grid;
-  align-content: center;
-  gap: 5px;
-  padding: 0 11px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
   border: 1px solid var(--border-color);
   border-radius: 11px;
   background: var(--surface);
   cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.menu-button:hover {
+  border-color: color-mix(in srgb, #2563eb 28%, var(--border-color));
+  background: var(--surface-hover);
+  transform: translateY(-1px);
+}
+
+.menu-button[aria-expanded='true'] {
+  border-color: color-mix(in srgb, #2563eb 38%, var(--border-color));
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.11);
 }
 
 .menu-button span {
-  width: 100%;
+  display: block;
+  width: 18px;
   height: 2px;
   border-radius: 2px;
+  background: var(--text-secondary);
+  transition: background 0.18s ease, transform 0.18s ease, width 0.18s ease;
+}
+
+.menu-button:hover span,
+.menu-button[aria-expanded='true'] span {
   background: var(--text-primary);
+}
+
+.menu-button[aria-expanded='true'] span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.menu-button[aria-expanded='true'] span:nth-child(2) {
+  width: 0;
+}
+
+.menu-button[aria-expanded='true'] span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
 }
 
 .menu-panel {
@@ -202,6 +236,14 @@
   font-size: 14px;
   font-weight: 650;
   cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.menu-logout:hover,
+.menu-logout:focus-visible {
+  outline: none;
+  background: rgba(220, 38, 38, 0.14);
+  color: #991b1b;
 }
 
 @media (max-width: 480px) {
