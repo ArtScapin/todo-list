@@ -243,7 +243,7 @@ export function ListsPage() {
             <div className="view-mode-control">
               <span>{t.common.kanban}</span>
               <button
-                className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
+                className={`theme-switch mode-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
                 type="button"
                 role="switch"
                 aria-checked={Boolean(workspace?.isKanbanViewMode)}
@@ -251,7 +251,7 @@ export function ListsPage() {
                 disabled={!workspace || isSavingViewMode}
                 onClick={() => void handleViewModeChange()}
               >
-                <span />
+                <span className="theme-switch-thumb" aria-hidden="true" />
               </button>
             </div>
             <button

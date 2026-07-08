@@ -77,14 +77,14 @@ export function WorkspaceModal({
               <span>{t.workspaceModal.kanbanDescription}</span>
             </div>
             <button
-              className={`theme-switch ${isKanbanViewMode ? 'active' : ''}`}
+              className={`theme-switch mode-switch ${isKanbanViewMode ? 'active' : ''}`}
               type="button"
               role="switch"
               aria-checked={isKanbanViewMode}
               aria-label={t.workspaceModal.toggleKanban}
               onClick={() => setIsKanbanViewMode((current) => !current)}
             >
-              <span />
+              <span className="theme-switch-thumb" aria-hidden="true" />
             </button>
           </div>
 

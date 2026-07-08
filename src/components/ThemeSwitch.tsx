@@ -16,7 +16,7 @@ export function ThemeSwitch({ isDarkTheme, ariaLabel, onToggle }: ThemeSwitchPro
       aria-label={ariaLabel}
       onClick={onToggle}
     >
-      <span />
+      <span className="theme-switch-thumb" aria-hidden="true" />
     </button>
   )
 }

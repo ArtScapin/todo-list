@@ -463,7 +463,7 @@ export function WorkspaceBoardPage() {
             <div className="view-mode-control">
               <span>{t.common.kanban}</span>
               <button
-                className={`theme-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
+                className={`theme-switch mode-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
                 type="button"
                 role="switch"
                 aria-checked={Boolean(workspace?.isKanbanViewMode)}
@@ -471,7 +471,7 @@ export function WorkspaceBoardPage() {
                 disabled={!workspace || isSavingViewMode}
                 onClick={() => void handleViewModeChange()}
               >
-                <span />
+                <span className="theme-switch-thumb" aria-hidden="true" />
               </button>
             </div>
             <button
