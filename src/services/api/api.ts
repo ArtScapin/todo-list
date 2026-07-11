@@ -1,3 +1,4 @@
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import {
   getAccessToken,
   getRefreshToken,
@@ -8,6 +9,14 @@ import {
 } from '../auth-storage'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  validateStatus: () => true,
+})
 
 export class ApiError extends Error {
   status?: number
@@ -30,6 +39,22 @@ function isPublicPath(path: string) {
   return path === '/login' || path === '/user'
 }
 
+function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
+  if (!headers) {
+    return {}
+  }
+
+  if (headers instanceof Headers) {
+    return Object.fromEntries(headers.entries())
+  }
+
+  if (Array.isArray(headers)) {
+    return Object.fromEntries(headers)
+  }
+
+  return headers
+}
+
 async function refreshSession() {
   if (refreshRequest) {
     return refreshRequest
@@ -41,17 +66,14 @@ async function refreshSession() {
     throw new ApiError('Refresh token não encontrado.', 400)
   }
 
-  refreshRequest = fetch(`${API_BASE_URL}/login/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
-  })
-    .then(async (response) => {
-      if (!response.ok) {
+  refreshRequest = apiClient
+    .post<Partial<TokenPair>>('/login/refresh', { refreshToken })
+    .then((response) => {
+      if (response.status < 200 || response.status >= 300) {
         throw new ApiError('Não foi possível renovar a sessão.', response.status)
       }
 
-      const tokens = (await response.json()) as Partial<TokenPair>
+      const tokens = response.data
 
       if (!tokens.token || !tokens.refreshToken) {
         throw new ApiError('A API retornou tokens inválidos.', 400)
@@ -83,15 +105,23 @@ async function renewAccessToken() {
   }
 }
 
-async function sendRequest(path: string, options: RequestInit | undefined, accessToken: string | null) {
-  return fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+async function sendRequest<T>(
+  path: string,
+  options: RequestInit | undefined,
+  accessToken: string | null,
+): Promise<AxiosResponse<T>> {
+  const config: AxiosRequestConfig = {
+    method: options?.method,
+    url: path,
+    data: options?.body,
+    signal: options?.signal ?? undefined,
     headers: {
-      'Content-Type': 'application/json',
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...options?.headers,
+      ...normalizeHeaders(options?.headers),
     },
-  })
+  }
+
+  return apiClient.request<T>(config)
 }
 
 export async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
@@ -103,14 +133,14 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
       accessToken = await renewAccessToken()
     }
 
-    let response = await sendRequest(path, options, accessToken)
+    let response = await sendRequest<T>(path, options, accessToken)
 
     if (!isPublicRequest && response.status === 401) {
       const currentAccessToken = getAccessToken()
       accessToken = currentAccessToken && currentAccessToken !== accessToken
         ? currentAccessToken
         : await renewAccessToken()
-      response = await sendRequest(path, options, accessToken)
+      response = await sendRequest<T>(path, options, accessToken)
 
       if (response.status === 401) {
         discardSession()
@@ -118,12 +148,11 @@ export async function apiRequest<T>(path: string, options?: RequestInit): Promis
       }
     }
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       throw new ApiError('A API recusou a requisição.', response.status)
     }
 
-    const content = await response.text()
-    return content ? (JSON.parse(content) as T) : (undefined as T)
+    return response.data
   } catch (error) {
     if (error instanceof ApiError) {
       throw error
