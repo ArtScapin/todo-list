@@ -72,6 +72,47 @@
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
+.item-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.list-settings-button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+
+.list-settings-button:hover:not(:disabled) {
+  background: var(--page-background);
+  color: var(--text-primary);
+  transform: rotate(18deg);
+}
+
+.list-settings-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.list-settings-button svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
 
 .list-name-error {
   display: block;
@@ -250,6 +291,19 @@
   .item-page-heading {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .item-page-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .item-page-actions .primary-button {
+    width: 100%;
+  }
+
+  .list-settings-button {
+    width: 100%;
   }
 
   .todo-item {

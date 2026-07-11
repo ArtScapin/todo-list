@@ -7,7 +7,7 @@ import { PageLoader } from '../components/PageLoader'
 import { SettingsModal } from '../components/SettingsModal'
 import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
-import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
+import { createList, getLists, type KanbanList } from '../services/api/lists'
 import { deleteWorkspace, getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/lists.css'
 
@@ -25,7 +25,6 @@ export function ListsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [editingList, setEditingList] = useState<KanbanList | null>(null)
   const [isEditingWorkspaceName, setIsEditingWorkspaceName] = useState(false)
   const [workspaceName, setWorkspaceName] = useState('')
   const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false)
@@ -74,17 +73,10 @@ export function ListsPage() {
 
   function closeModal() {
     setIsModalOpen(false)
-    setEditingList(null)
     setSaveError(null)
   }
 
   function openCreateModal() {
-    setEditingList(null)
-    setIsModalOpen(true)
-  }
-
-  function openEditModal(list: KanbanList) {
-    setEditingList(list)
     setIsModalOpen(true)
   }
 
@@ -97,28 +89,16 @@ export function ListsPage() {
     setSaveError(null)
 
     try {
-      if (editingList) {
-        const updatedList = await updateList(editingList.id, {
-          name,
-          color,
-          status: editingList.status,
-          position: editingList.position,
-        })
-        setLists((current) => current.map((list) => (
-          list.id === updatedList.id ? updatedList : list
-        )))
-      } else {
-        const nextPosition = lists.length === 0
-          ? 0
-          : Math.max(...lists.map((list) => list.position)) + 1
-        const createdList = await createList(parsedWorkspaceId, {
-          name,
-          color,
-          status: false,
-          position: nextPosition,
-        })
-        setLists((current) => [...current, createdList])
-      }
+      const nextPosition = lists.length === 0
+        ? 0
+        : Math.max(...lists.map((list) => list.position)) + 1
+      const createdList = await createList(parsedWorkspaceId, {
+        name,
+        color,
+        status: false,
+        position: nextPosition,
+      })
+      setLists((current) => [...current, createdList])
       closeModal()
     } catch (error) {
       const hasApiResponse = error instanceof ApiError && error.status !== undefined
@@ -350,18 +330,6 @@ export function ListsPage() {
                     </div>
                   </header>
                 </Link>
-                <button
-                  className="list-edit-button"
-                  type="button"
-                  aria-label={t.lists.editAria(list.name)}
-                  title={t.lists.editTitle}
-                  onClick={() => openEditModal(list)}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                  </svg>
-                </button>
               </article>
             ))}
           </section>
@@ -370,7 +338,6 @@ export function ListsPage() {
 
       {isModalOpen ? (
         <ListModal
-          list={editingList}
           isSaving={isSaving}
           errorMessage={saveError}
           onClose={closeModal}

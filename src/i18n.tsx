@@ -155,6 +155,7 @@ export const translations = {
       pending: 'Pendente',
     },
     listModal: {
+      settingsTitle: 'Configurações da lista',
       editTitle: 'Editar lista',
       createTitle: 'Nova lista',
       placeholder: 'Ex.: Em andamento',
@@ -162,6 +163,10 @@ export const translations = {
       selectColor: (color: string) => `Selecionar cor ${color}`,
       save: 'Salvar lista',
       create: 'Criar lista',
+      delete: 'Excluir lista',
+      deleteTitle: 'Excluir lista',
+      deleteMessage: (name: string) => `Tem certeza que deseja excluir a lista "${name}"? Todos os itens desta lista também serão excluídos. Esta ação não pode ser desfeita.`,
+      deleteError: 'Não foi possível excluir a lista.',
     },
     items: {
       searchLabel: 'Buscar itens',
@@ -380,6 +385,7 @@ export const translations = {
       pending: 'Pending',
     },
     listModal: {
+      settingsTitle: 'List settings',
       editTitle: 'Edit list',
       createTitle: 'New list',
       placeholder: 'e.g. In progress',
@@ -387,6 +393,10 @@ export const translations = {
       selectColor: (color: string) => `Select color ${color}`,
       save: 'Save list',
       create: 'Create list',
+      delete: 'Delete list',
+      deleteTitle: 'Delete list',
+      deleteMessage: (name: string) => `Are you sure you want to delete the "${name}" list? All items in this list will also be deleted. This action cannot be undone.`,
+      deleteError: 'Could not delete the list.',
     },
     items: {
       searchLabel: 'Search items',
@@ -605,6 +615,7 @@ export const translations = {
       pending: 'Pendiente',
     },
     listModal: {
+      settingsTitle: 'Configuración de la lista',
       editTitle: 'Editar lista',
       createTitle: 'Nueva lista',
       placeholder: 'Ej.: En progreso',
@@ -612,6 +623,10 @@ export const translations = {
       selectColor: (color: string) => `Seleccionar color ${color}`,
       save: 'Guardar lista',
       create: 'Crear lista',
+      delete: 'Eliminar lista',
+      deleteTitle: 'Eliminar lista',
+      deleteMessage: (name: string) => `¿Seguro que deseas eliminar la lista "${name}"? Todos los ítems de esta lista también serán eliminados. Esta acción no se puede deshacer.`,
+      deleteError: 'No fue posible eliminar la lista.',
     },
     items: {
       searchLabel: 'Buscar \u00edtems',

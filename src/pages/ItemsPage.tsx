@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
+import { ListModal } from '../components/ListModal'
 import { PageLoader } from '../components/PageLoader'
 import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
@@ -16,12 +17,13 @@ import {
   type Item,
   type Priority,
 } from '../services/api/items'
-import { getList, updateList, type KanbanList } from '../services/api/lists'
+import { deleteList, getList, updateList, type KanbanList } from '../services/api/lists'
 import { getWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/items.css'
 
 export function ItemsPage() {
   const { t } = useI18n()
+  const navigate = useNavigate()
   const { workspaceId, listId } = useParams()
   const parsedWorkspaceId = Number(workspaceId)
   const parsedListId = Number(listId)
@@ -45,6 +47,10 @@ export function ItemsPage() {
   const [listName, setListName] = useState('')
   const [isSavingListName, setIsSavingListName] = useState(false)
   const [listNameError, setListNameError] = useState<string | null>(null)
+  const [isListSettingsOpen, setIsListSettingsOpen] = useState(false)
+  const [isSavingListSettings, setIsSavingListSettings] = useState(false)
+  const [listSettingsError, setListSettingsError] = useState<string | null>(null)
+  const [isConfirmingListDeletion, setIsConfirmingListDeletion] = useState(false)
 
   useEffect(() => {
     if (!hasValidIds) {
@@ -272,6 +278,47 @@ export function ItemsPage() {
     }
   }
 
+  async function handleSaveListSettings(name: string, color: string) {
+    if (!list || isSavingListSettings) return
+
+    setIsSavingListSettings(true)
+    setListSettingsError(null)
+    try {
+      const updatedList = await updateList(list.id, {
+        name,
+        color,
+        status: list.status,
+        position: list.position,
+      })
+      setList(updatedList)
+      setListName(updatedList.name)
+      setIsListSettingsOpen(false)
+    } catch {
+      setListSettingsError(t.items.renameError)
+    } finally {
+      setIsSavingListSettings(false)
+    }
+  }
+
+  async function handleDeleteCurrentList() {
+    if (!list || isSavingListSettings) return
+
+    setIsSavingListSettings(true)
+    setListSettingsError(null)
+
+    try {
+      await deleteList(list.id)
+      setIsConfirmingListDeletion(false)
+      setIsListSettingsOpen(false)
+      navigate(`/workspaces/${parsedWorkspaceId}/lists`, { replace: true })
+    } catch {
+      setIsConfirmingListDeletion(false)
+      setListSettingsError(t.listModal.deleteError)
+    } finally {
+      setIsSavingListSettings(false)
+    }
+  }
+
   if (isLoading && hasValidIds) {
     return (
       <AuthenticatedLayout
@@ -337,9 +384,27 @@ export function ItemsPage() {
             <p>{t.items.pendingCount(pendingItemsCount)}</p>
             {listNameError ? <span className="list-name-error" role="alert">{listNameError}</span> : null}
           </div>
-          <button className="primary-button" type="button" disabled={!list} onClick={openCreateModal}>
-            {t.items.newItem}
-          </button>
+          <div className="item-page-actions">
+            <button className="primary-button" type="button" disabled={!list} onClick={openCreateModal}>
+              {t.items.newItem}
+            </button>
+            <button
+              className="list-settings-button"
+              type="button"
+              aria-label={t.listModal.settingsTitle}
+              title={t.listModal.settingsTitle}
+              disabled={!list}
+              onClick={() => {
+                setIsListSettingsOpen(true)
+                setListSettingsError(null)
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.55 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.55a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.45 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.37.33.71.6 1 .3.28.7.43 1.1.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {(!isLoading || !hasValidIds) && pageError ? (
@@ -440,6 +505,36 @@ export function ItemsPage() {
           onSave={handleUpdateSelectedItem}
           onStatusChange={handleChangeSelectedItemStatus}
           onDelete={() => setItemPendingDeletion(editingItem)}
+        />
+      ) : null}
+
+      {isListSettingsOpen && list ? (
+        <ListModal
+          list={list}
+          title={t.listModal.settingsTitle}
+          isSaving={isSavingListSettings}
+          errorMessage={listSettingsError}
+          onClose={() => {
+            if (!isSavingListSettings) {
+              setIsListSettingsOpen(false)
+              setListSettingsError(null)
+              setIsConfirmingListDeletion(false)
+            }
+          }}
+          onSubmit={handleSaveListSettings}
+          onDelete={() => setIsConfirmingListDeletion(true)}
+        />
+      ) : null}
+
+      {isConfirmingListDeletion && list ? (
+        <ConfirmModal
+          title={t.listModal.deleteTitle}
+          message={t.listModal.deleteMessage(list.name)}
+          isConfirming={isSavingListSettings}
+          onCancel={() => {
+            if (!isSavingListSettings) setIsConfirmingListDeletion(false)
+          }}
+          onConfirm={() => void handleDeleteCurrentList()}
         />
       ) : null}
 

@@ -199,39 +199,7 @@
 .list-card-link {
   display: block;
   min-height: 100px;
-  padding-right: 38px;
   text-decoration: none;
-}
-
-.list-edit-button {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.list-edit-button:hover {
-  background: var(--page-background);
-  color: var(--text-primary);
-}
-
-.list-edit-button svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
 }
 
 .list-card h2 {

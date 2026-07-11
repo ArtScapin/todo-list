@@ -120,6 +120,45 @@
   font-weight: 800;
 }
 
+.list-settings-delete-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.list-settings-delete-button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.list-settings-delete-button:hover {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #dc2626;
+}
+
+.list-settings-delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .confirm-modal p {
   margin: 0;
   color: var(--text-secondary);

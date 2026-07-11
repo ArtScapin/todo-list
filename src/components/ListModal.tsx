@@ -16,13 +16,15 @@ const LIST_COLORS = [
 
 type ListModalProps = {
   list?: KanbanList | null
+  title?: string
   isSaving: boolean
   errorMessage: string | null
   onClose: () => void
   onSubmit: (name: string, color: string) => Promise<void>
+  onDelete?: () => void
 }
 
-export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: ListModalProps) {
+export function ListModal({ list, title, isSaving, errorMessage, onClose, onSubmit, onDelete }: ListModalProps) {
   const { t } = useI18n()
   const [name, setName] = useState(list?.name ?? '')
   const [color, setColor] = useState(list?.color ?? '#2563eb')
@@ -53,7 +55,7 @@ export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: L
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
-          <h2 id="list-modal-title">{list ? t.listModal.editTitle : t.listModal.createTitle}</h2>
+          <h2 id="list-modal-title">{title ?? (list ? t.listModal.editTitle : t.listModal.createTitle)}</h2>
           <button type="button" aria-label={t.common.close} onClick={onClose}>&times;</button>
         </div>
 
@@ -88,6 +90,20 @@ export function ListModal({ list, isSaving, errorMessage, onClose, onSubmit }: L
           </div>
 
           {errorMessage ? <div className="feedback error" role="alert">{errorMessage}</div> : null}
+
+          {list && onDelete ? (
+            <button
+              className="list-settings-delete-button"
+              type="button"
+              disabled={isSaving}
+              onClick={onDelete}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
+              </svg>
+              {t.listModal.delete}
+            </button>
+          ) : null}
 
           <div className="modal-actions">
             <button className="secondary-button" type="button" onClick={onClose} disabled={isSaving}>
