@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
 import { KanbanSettingsModal } from '../components/KanbanSettingsModal'
 import { PageLoader } from '../components/PageLoader'
 import { useI18n } from '../i18n'
 import { createItem, deleteItem, getItems, moveItem, updateItem, type Item, type Priority } from '../services/api/items'
-import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
-import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
+import { createList, deleteList, getLists, updateList, type KanbanList } from '../services/api/lists'
+import { deleteWorkspace, getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/board.css'
 
 type BoardColumn = KanbanList & {
@@ -43,6 +44,8 @@ export function WorkspaceBoardPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [columnPendingDeletion, setColumnPendingDeletion] = useState<BoardColumn | null>(null)
+  const [isConfirmingWorkspaceDeletion, setIsConfirmingWorkspaceDeletion] = useState(false)
   const [itemListId, setItemListId] = useState<number | null>(null)
   const [isSavingItem, setIsSavingItem] = useState(false)
   const [itemError, setItemError] = useState<string | null>(null)
@@ -259,6 +262,45 @@ export function WorkspaceBoardPage() {
     }
   }
 
+  async function handleDeleteColumn() {
+    if (!columnPendingDeletion) return
+
+    setIsSavingSettings(true)
+    setSettingsError(null)
+
+    try {
+      await deleteList(columnPendingDeletion.id)
+      setColumns((current) => withKanbanItemStatuses(current.filter((column) => (
+        column.id !== columnPendingDeletion.id
+      ))))
+      setSelectedItem((current) => (
+        columnPendingDeletion.items.some((item) => item.id === current?.id) ? null : current
+      ))
+      setColumnPendingDeletion(null)
+    } catch {
+      setSettingsError(t.board.deleteColumnError)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
+  async function handleDeleteWorkspace() {
+    if (!workspace) return
+
+    setIsSavingSettings(true)
+    setSettingsError(null)
+
+    try {
+      await deleteWorkspace(workspace.id)
+      setIsConfirmingWorkspaceDeletion(false)
+      navigate('/workspaces', { replace: true })
+    } catch {
+      setSettingsError(t.kanbanSettings.deleteWorkspaceError)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
   async function handleCreateItem(data: {
     name: string
     description: string
@@ -460,20 +502,6 @@ export function WorkspaceBoardPage() {
             {workspaceNameError ? <span className="workspace-name-error" role="alert">{workspaceNameError}</span> : null}
           </div>
           <div className="board-heading-actions">
-            <div className="view-mode-control">
-              <span>{t.common.kanban}</span>
-              <button
-                className={`theme-switch mode-switch ${workspace?.isKanbanViewMode ? 'active' : ''}`}
-                type="button"
-                role="switch"
-                aria-checked={Boolean(workspace?.isKanbanViewMode)}
-                aria-label={t.workspaceModal.toggleKanban}
-                disabled={!workspace || isSavingViewMode}
-                onClick={() => void handleViewModeChange()}
-              >
-                <span className="theme-switch-thumb" aria-hidden="true" />
-              </button>
-            </div>
             <button
               className="primary-button board-create-button"
               type="button"
@@ -573,18 +601,50 @@ export function WorkspaceBoardPage() {
         ) : null}
       </main>
 
-      {isSettingsOpen ? (
+      {isSettingsOpen && workspace ? (
         <KanbanSettingsModal
+          workspace={workspace}
           columns={columns}
           errorMessage={settingsError}
           isSaving={isSavingSettings}
+          isSavingWorkspace={isSavingSettings || isSavingViewMode}
           onClose={() => {
             setIsSettingsOpen(false)
             setSettingsError(null)
           }}
+          onToggleKanbanMode={handleViewModeChange}
+          onDeleteWorkspace={() => setIsConfirmingWorkspaceDeletion(true)}
           onCreate={handleCreateColumn}
           onUpdate={handleUpdateColumn}
+          onDelete={(column) => {
+            const boardColumn = columns.find((current) => current.id === column.id)
+            if (boardColumn) setColumnPendingDeletion(boardColumn)
+          }}
           onReorder={handleReorderColumns}
+        />
+      ) : null}
+
+      {workspace && isConfirmingWorkspaceDeletion ? (
+        <ConfirmModal
+          title={t.kanbanSettings.deleteWorkspaceTitle}
+          message={t.kanbanSettings.deleteWorkspaceMessage(workspace.name)}
+          isConfirming={isSavingSettings}
+          onCancel={() => {
+            if (!isSavingSettings) setIsConfirmingWorkspaceDeletion(false)
+          }}
+          onConfirm={() => void handleDeleteWorkspace()}
+        />
+      ) : null}
+
+      {columnPendingDeletion ? (
+        <ConfirmModal
+          title={t.kanbanSettings.deleteTitle}
+          message={t.kanbanSettings.deleteMessage(columnPendingDeletion.name)}
+          isConfirming={isSavingSettings}
+          onCancel={() => {
+            if (!isSavingSettings) setColumnPendingDeletion(null)
+          }}
+          onConfirm={() => void handleDeleteColumn()}
         />
       ) : null}
 

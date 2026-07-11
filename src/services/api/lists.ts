@@ -36,3 +36,7 @@ export function updateList(id: number, data: ListData) {
     body: JSON.stringify(data),
   })
 }
+
+export function deleteList(id: number) {
+  return apiRequest<void>(`/list/${id}`, { method: 'DELETE' })
+}

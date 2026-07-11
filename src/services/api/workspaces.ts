@@ -32,3 +32,7 @@ export function updateWorkspace(id: number, data: WorkspaceData) {
     body: JSON.stringify(data),
   })
 }
+
+export function deleteWorkspace(id: number) {
+  return apiRequest<void>(`/workspace/${id}`, { method: 'DELETE' })
+}

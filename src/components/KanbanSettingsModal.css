@@ -8,11 +8,83 @@
   font-size: 12px;
 }
 
+.settings-section {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-section + .settings-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-section-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.settings-section-header p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.settings-mode-option {
+  margin-top: 0;
+}
+
+.workspace-delete-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  justify-self: start;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.workspace-delete-button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.workspace-delete-button:hover {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #dc2626;
+}
+
+.workspace-delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .new-column-form {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
-  margin-bottom: 18px;
 }
 
 .column-settings-list {
@@ -94,8 +166,7 @@
   gap: 4px;
 }
 
-.column-row-actions button,
-.column-edit-action {
+.column-row-actions button {
   padding: 6px 8px;
   border: 0;
   border-radius: 7px;
@@ -107,10 +178,36 @@
   cursor: pointer;
 }
 
-.column-row-actions button:hover,
-.column-edit-action:hover {
+.column-icon-action {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
+.column-icon-action svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.column-row-actions button:hover {
   background: var(--surface);
   color: var(--text-primary);
+}
+
+.column-delete-action {
+  color: var(--text-secondary);
+}
+
+.column-row-actions .column-delete-action:hover {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #dc2626;
 }
 
 @media (max-width: 560px) {
@@ -119,7 +216,8 @@
   }
 
   .column-row-actions,
-  .column-edit-action {
+  .column-edit-action,
+  .column-delete-action {
     grid-column: 2;
   }
 }
