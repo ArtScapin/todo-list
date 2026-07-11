@@ -138,12 +138,34 @@
 }
 
 .todo-item {
+  width: 100%;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
   gap: 15px;
   padding: 18px 20px;
+  border: 0;
   border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.todo-item:hover:not(:disabled),
+.todo-item:focus-visible {
+  background: var(--page-background);
+  outline: 0;
+}
+
+.todo-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.todo-item:disabled .todo-item-content {
+  opacity: 0.75;
 }
 
 .todo-item:last-child {
@@ -177,6 +199,11 @@
   background: #2563eb;
 }
 
+.status-button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
 .todo-item-content h2 {
   margin: 0;
   color: var(--text-primary);
@@ -204,44 +231,19 @@
 .priority-high { background: #ffedd5; color: #9a3412; }
 .priority-critical { background: #fee2e2; color: #991b1b; }
 
-.todo-item-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.todo-item-actions button {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
+.todo-item-status {
+  align-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #94a3b8 16%, var(--page-background));
   color: var(--text-secondary);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.todo-item-actions svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.todo-item-actions button:hover {
-  background: var(--page-background);
-  color: var(--text-primary);
-}
-
-.todo-item-actions .delete-action:hover {
-  color: #dc2626;
+.todo-item-status.completed {
+  background: color-mix(in srgb, #22c55e 16%, var(--page-background));
+  color: #15803d;
 }
 
 @media (max-width: 600px) {
@@ -252,9 +254,5 @@
 
   .todo-item {
     grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .todo-item-actions {
-    grid-column: 2;
   }
 }

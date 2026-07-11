@@ -55,6 +55,7 @@ export function WorkspaceBoardPage() {
   const [workspaceNameError, setWorkspaceNameError] = useState<string | null>(null)
   const [isSavingViewMode, setIsSavingViewMode] = useState(false)
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [itemPendingDeletion, setItemPendingDeletion] = useState<Item | null>(null)
   const selectedItemColumn = selectedItem
     ? columns.find((column) => column.items.some((item) => item.id === selectedItem.id))
     : undefined
@@ -414,21 +415,21 @@ export function WorkspaceBoardPage() {
     }
   }
 
-  async function handleDeleteSelectedItem() {
-    if (!selectedItem) return
-
+  async function handleDeleteItem(itemToDelete: Item) {
     setIsSavingItem(true)
     setItemError(null)
 
     try {
-      await deleteItem(selectedItem.id)
+      await deleteItem(itemToDelete.id)
       setColumns((current) => withKanbanItemStatuses(current.map((column) => ({
         ...column,
-        items: column.items.filter((item) => item.id !== selectedItem.id),
+        items: column.items.filter((item) => item.id !== itemToDelete.id),
       }))))
-      setSelectedItem(null)
+      setSelectedItem((current) => (current?.id === itemToDelete.id ? null : current))
+      setItemPendingDeletion(null)
     } catch {
       setItemError(t.itemDetails.deleteError)
+      setItemPendingDeletion(null)
     } finally {
       setIsSavingItem(false)
     }
@@ -686,7 +687,19 @@ export function WorkspaceBoardPage() {
           }}
           onSave={handleUpdateItem}
           onStatusChange={handleChangeSelectedItemStatus}
-          onDelete={handleDeleteSelectedItem}
+          onDelete={() => setItemPendingDeletion(selectedItem)}
+        />
+      ) : null}
+
+      {itemPendingDeletion ? (
+        <ConfirmModal
+          title={t.items.deleteTitle}
+          message={t.items.deleteMessage(itemPendingDeletion.name)}
+          isConfirming={isSavingItem}
+          onCancel={() => {
+            if (!isSavingItem) setItemPendingDeletion(null)
+          }}
+          onConfirm={() => void handleDeleteItem(itemPendingDeletion)}
         />
       ) : null}
     </AuthenticatedLayout>

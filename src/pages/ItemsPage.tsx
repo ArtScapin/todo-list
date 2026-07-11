@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
 import { PageLoader } from '../components/PageLoader'
 import { useI18n } from '../i18n'
@@ -35,12 +36,11 @@ export function ItemsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [itemPendingDeletion, setItemPendingDeletion] = useState<Item | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [busyItemIds, setBusyItemIds] = useState<Set<number>>(new Set())
-  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [isEditingListName, setIsEditingListName] = useState(false)
   const [listName, setListName] = useState('')
   const [isSavingListName, setIsSavingListName] = useState(false)
@@ -89,17 +89,10 @@ export function ItemsPage() {
 
   function closeModal() {
     setIsModalOpen(false)
-    setEditingItem(null)
     setSaveError(null)
   }
 
   function openCreateModal() {
-    setEditingItem(null)
-    setIsModalOpen(true)
-  }
-
-  function openEditModal(item: Item) {
-    setEditingItem(item)
     setIsModalOpen(true)
   }
 
@@ -114,30 +107,17 @@ export function ItemsPage() {
     setSaveError(null)
 
     try {
-      if (editingItem) {
-        const updatedItem = await updateItem(editingItem.id, {
-          name: data.name,
-          description: data.description,
-          priority: data.priority,
-          status: editingItem.status,
-          position: editingItem.position,
-        })
-        setItems((current) => current.map((item) => (
-          item.id === updatedItem.id ? updatedItem : item
-        )))
-      } else {
-        const nextPosition = items.length === 0
-          ? 0
-          : Math.max(...items.map((item) => item.position)) + 1
-        const createdItem = await createItem(parsedListId, {
-          name: data.name,
-          description: data.description,
-          priority: data.priority,
-          status: false,
-          position: nextPosition,
-        })
-        setItems((current) => [...current, createdItem])
-      }
+      const nextPosition = items.length === 0
+        ? 0
+        : Math.max(...items.map((item) => item.position)) + 1
+      const createdItem = await createItem(parsedListId, {
+        name: data.name,
+        description: data.description,
+        priority: data.priority,
+        status: false,
+        position: nextPosition,
+      })
+      setItems((current) => [...current, createdItem])
 
       closeModal()
     } catch (error) {
@@ -152,8 +132,68 @@ export function ItemsPage() {
     }
   }
 
-  async function handleChangeStatus(item: Item) {
-    setActionError(null)
+  async function handleUpdateSelectedItem(data: {
+    name: string
+    description: string
+    priority: Priority
+  }) {
+    if (!editingItem) return
+
+    setIsSaving(true)
+    setSaveError(null)
+
+    try {
+      const updatedItem = await updateItem(editingItem.id, {
+        name: data.name,
+        description: data.description,
+        priority: data.priority,
+        status: editingItem.status,
+        position: editingItem.position,
+      })
+      setItems((current) => current.map((item) => (
+        item.id === updatedItem.id ? updatedItem : item
+      )))
+      setEditingItem(updatedItem)
+    } catch {
+      setSaveError(t.itemDetails.saveError)
+      throw new Error(t.itemDetails.saveError)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleChangeSelectedItemStatus(statusId: number) {
+    if (!editingItem) return
+    const nextStatus = statusId === 1
+
+    if (editingItem.status === nextStatus) return
+
+    setSaveError(null)
+    setIsSaving(true)
+    setBusyItemIds((current) => new Set(current).add(editingItem.id))
+
+    try {
+      await changeItemStatus(editingItem.id)
+      setEditingItem((current) => current ? { ...current, status: nextStatus } : current)
+      setItems((current) => current.map((currentItem) => (
+        currentItem.id === editingItem.id
+          ? { ...currentItem, status: nextStatus }
+          : currentItem
+      )))
+    } catch {
+      setSaveError(t.items.statusError)
+    } finally {
+      setIsSaving(false)
+      setBusyItemIds((current) => {
+        const next = new Set(current)
+        next.delete(editingItem.id)
+        return next
+      })
+    }
+  }
+
+  async function handleChangeItemStatus(item: Item) {
+    setSaveError(null)
     setBusyItemIds((current) => new Set(current).add(item.id))
 
     try {
@@ -163,8 +203,11 @@ export function ItemsPage() {
           ? { ...currentItem, status: !currentItem.status }
           : currentItem
       )))
+      setEditingItem((current) => (
+        current?.id === item.id ? { ...current, status: !current.status } : current
+      ))
     } catch {
-      setActionError(t.items.statusError)
+      setSaveError(t.items.statusError)
     } finally {
       setBusyItemIds((current) => {
         const next = new Set(current)
@@ -175,16 +218,20 @@ export function ItemsPage() {
   }
 
   async function handleDeleteItem(item: Item) {
-    setActionError(null)
+    setSaveError(null)
+    setIsSaving(true)
     setBusyItemIds((current) => new Set(current).add(item.id))
 
     try {
       await deleteItem(item.id)
       setItems((current) => current.filter((currentItem) => currentItem.id !== item.id))
-      setItemToDelete(null)
+      setEditingItem((current) => (current?.id === item.id ? null : current))
+      setItemPendingDeletion(null)
     } catch {
-      setActionError(t.items.deleteError)
+      setSaveError(t.itemDetails.deleteError)
+      setItemPendingDeletion(null)
     } finally {
+      setIsSaving(false)
       setBusyItemIds((current) => {
         const next = new Set(current)
         next.delete(item.id)
@@ -299,8 +346,6 @@ export function ItemsPage() {
           <div className="state-card error-state"><p>{pageError}</p></div>
         ) : null}
 
-        {actionError ? <div className="inline-error" role="alert">{actionError}</div> : null}
-
         {!isLoading && !pageError && items.length === 0 ? (
           <div className="state-card empty-state">
             <h2>{t.items.emptyTitle}</h2>
@@ -321,16 +366,35 @@ export function ItemsPage() {
               const isBusy = busyItemIds.has(item.id)
 
               return (
-                <article className={`todo-item ${item.status ? 'completed' : ''}`} key={item.id}>
-                  <button
+                <button
+                  className={`todo-item ${item.status ? 'completed' : ''}`}
+                  type="button"
+                  key={item.id}
+                  onClick={() => {
+                    setEditingItem(item)
+                    setSaveError(null)
+                  }}
+                >
+                  <span
                     className="status-button"
-                    type="button"
+                    role="checkbox"
+                    aria-checked={item.status}
                     aria-label={item.status ? t.items.reopenItem(item.name) : t.items.completeItem(item.name)}
-                    disabled={isBusy}
-                    onClick={() => void handleChangeStatus(item)}
+                    tabIndex={isBusy ? -1 : 0}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      if (!isBusy) void handleChangeItemStatus(item)
+                    }}
+                    onKeyDown={(event) => {
+                      if ((event.key === 'Enter' || event.key === ' ') && !isBusy) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        void handleChangeItemStatus(item)
+                      }
+                    }}
                   >
                     {item.status ? '\u2713' : ''}
-                  </button>
+                  </span>
                   <div className="todo-item-content">
                     <h2>{item.name}</h2>
                     {item.description ? <p>{item.description}</p> : null}
@@ -338,33 +402,10 @@ export function ItemsPage() {
                       {t.priorities[item.priority]}
                     </span>
                   </div>
-                  <div className="todo-item-actions">
-                    <button
-                      type="button"
-                      aria-label={t.items.editItem(item.name)}
-                      title={t.common.edit}
-                      disabled={isBusy}
-                      onClick={() => openEditModal(item)}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="delete-action"
-                      type="button"
-                      aria-label={t.items.deleteItem(item.name)}
-                      title={t.common.delete}
-                      disabled={isBusy}
-                      onClick={() => setItemToDelete(item)}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
-                      </svg>
-                    </button>
-                  </div>
-                </article>
+                  <span className={`todo-item-status ${item.status ? 'completed' : ''}`}>
+                    {item.status ? t.common.completed : t.common.pending}
+                  </span>
+                </button>
               )
             })}
           </section>
@@ -373,7 +414,6 @@ export function ItemsPage() {
 
       {isModalOpen ? (
         <ItemModal
-          item={editingItem}
           isSaving={isSaving}
           errorMessage={saveError}
           allowStatusEdit={false}
@@ -382,13 +422,36 @@ export function ItemsPage() {
         />
       ) : null}
 
-      {itemToDelete ? (
+      {editingItem ? (
+        <ItemDetailsModal
+          item={editingItem}
+          columns={[
+            { id: 0, name: t.common.pending, color: '#94a3b8' },
+            { id: 1, name: t.common.completed, color: '#22c55e' },
+          ]}
+          currentColumnId={editingItem.status ? 1 : 0}
+          isSaving={isSaving}
+          errorMessage={saveError}
+          statusControl="checkbox"
+          onClose={() => {
+            setEditingItem(null)
+            setSaveError(null)
+          }}
+          onSave={handleUpdateSelectedItem}
+          onStatusChange={handleChangeSelectedItemStatus}
+          onDelete={() => setItemPendingDeletion(editingItem)}
+        />
+      ) : null}
+
+      {itemPendingDeletion ? (
         <ConfirmModal
           title={t.items.deleteTitle}
-          message={t.items.deleteMessage(itemToDelete.name)}
-          isConfirming={busyItemIds.has(itemToDelete.id)}
-          onCancel={() => setItemToDelete(null)}
-          onConfirm={() => void handleDeleteItem(itemToDelete)}
+          message={t.items.deleteMessage(itemPendingDeletion.name)}
+          isConfirming={busyItemIds.has(itemPendingDeletion.id)}
+          onCancel={() => {
+            if (!busyItemIds.has(itemPendingDeletion.id)) setItemPendingDeletion(null)
+          }}
+          onConfirm={() => void handleDeleteItem(itemPendingDeletion)}
         />
       ) : null}
     </AuthenticatedLayout>

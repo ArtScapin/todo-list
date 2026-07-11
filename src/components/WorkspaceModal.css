@@ -171,13 +171,18 @@
   gap: 6px;
 }
 
-.modal-header .item-details-delete {
+.modal-header .item-details-delete,
+.modal-header .item-details-close {
   width: 34px;
   height: 34px;
   display: grid;
   padding: 0;
   place-items: center;
   border-radius: 9px;
+  line-height: 1;
+}
+
+.modal-header .item-details-delete {
   color: #ef4444;
   font-size: 0;
   transition: background 0.18s, color 0.18s, transform 0.18s;
@@ -195,7 +200,13 @@
   transform: none;
 }
 
-.item-details-delete svg {
+.modal-header .item-details-close {
+  color: var(--text-secondary);
+  font-size: 0;
+}
+
+.item-details-delete svg,
+.item-details-close svg {
   width: 18px;
   height: 18px;
   fill: none;
@@ -203,61 +214,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.8;
-}
-
-.delete-confirmation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, #ef4444 32%, var(--border-color));
-  border-radius: 12px;
-  background: color-mix(in srgb, #ef4444 10%, var(--page-background));
-}
-
-.delete-confirmation > span {
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.delete-confirmation > div {
-  display: flex;
-  gap: 8px;
-}
-
-.delete-confirmation button {
-  padding: 7px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.delete-confirmation button:hover {
-  background: var(--page-background);
-}
-
-.delete-confirmation .danger-confirm {
-  border-color: #ef4444;
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.delete-confirmation .danger-confirm:hover {
-  background: #dc2626;
-}
-
-.delete-confirmation button:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
 }
 
 .editable-detail-title {
@@ -448,6 +404,47 @@
 }
 
 .priority-combo-trigger:focus-visible {
+  border-radius: 7px;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.status-check-trigger {
+  width: 100%;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.status-check-box {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #94a3b8;
+  border-radius: 7px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.status-check-trigger[aria-checked='true'] .status-check-box {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+.status-check-trigger:focus-visible {
   border-radius: 7px;
   outline: 0;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);

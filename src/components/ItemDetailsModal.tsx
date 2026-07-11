@@ -13,10 +13,11 @@ type ItemDetailsModalProps = {
   currentColumnId: number
   isSaving: boolean
   errorMessage: string | null
+  statusControl?: 'combo' | 'checkbox'
   onClose: () => void
   onSave: (data: { name: string; description: string; priority: Priority }) => Promise<void>
   onStatusChange: (columnId: number) => Promise<void>
-  onDelete: () => Promise<void>
+  onDelete: () => void
 }
 
 const PRIORITIES: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
@@ -34,6 +35,7 @@ export function ItemDetailsModal({
   currentColumnId,
   isSaving,
   errorMessage,
+  statusControl = 'combo',
   onClose,
   onSave,
   onStatusChange,
@@ -46,7 +48,6 @@ export function ItemDetailsModal({
   const [editingField, setEditingField] = useState<'name' | 'description' | null>(null)
   const [isPriorityOpen, setIsPriorityOpen] = useState(false)
   const [isStatusOpen, setIsStatusOpen] = useState(false)
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const currentColumn = columns.find((column) => column.id === currentColumnId)
 
   useEffect(() => {
@@ -162,37 +163,27 @@ export function ItemDetailsModal({
               type="button"
               aria-label={t.itemDetails.deleteItem}
               title={t.itemDetails.deleteItem}
-              onClick={() => setIsConfirmingDelete(true)}
+              onClick={onDelete}
               disabled={isSaving}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />
               </svg>
             </button>
-            <button type="button" aria-label={t.itemDetails.closeDetails} onClick={onClose}>&times;</button>
+            <button
+              className="item-details-close"
+              type="button"
+              aria-label={t.itemDetails.closeDetails}
+              onClick={onClose}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
         <div className="item-details-grid">
-          {isConfirmingDelete ? (
-            <div className="delete-confirmation" role="alert">
-              <span>{t.itemDetails.deleteConfirm}</span>
-              <div>
-                <button type="button" onClick={() => setIsConfirmingDelete(false)} disabled={isSaving}>
-                  {t.common.cancel}
-                </button>
-                <button
-                  className="danger-confirm"
-                  type="button"
-                  onClick={() => void onDelete()}
-                  disabled={isSaving}
-                >
-                  {isSaving ? t.common.deleting : t.common.yesDelete}
-                </button>
-              </div>
-            </div>
-          ) : null}
-
           <div className="editable-description-block">
             <span>{t.common.description}</span>
             {editingField === 'description' ? (
@@ -272,56 +263,78 @@ export function ItemDetailsModal({
                 </div>
               ) : null}
             </div>
-            <div
-              className="status-property-card"
-              style={{ '--status-color': currentColumn?.color || '#2563eb' } as CSSProperties}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) {
-                  setIsStatusOpen(false)
-                }
-              }}
-            >
-              <span>{t.common.status}</span>
-              <button
-                className="priority-combo-trigger"
-                type="button"
-                onClick={() => setIsStatusOpen((current) => !current)}
-                aria-haspopup="listbox"
-                aria-expanded={isStatusOpen}
-                disabled={isSaving}
+            {statusControl === 'checkbox' ? (
+              <div
+                className="status-property-card"
+                style={{ '--status-color': item.status ? '#22c55e' : '#94a3b8' } as CSSProperties}
               >
-                {currentColumn?.name ?? t.itemDetails.statusFallback}
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-              {isStatusOpen ? (
-                <div className="priority-combo-menu" role="listbox">
-                  {columns.map((column) => (
-                    <button
-                      className={column.id === currentColumnId ? 'selected' : ''}
-                      type="button"
-                      role="option"
-                      aria-selected={column.id === currentColumnId}
-                      key={column.id}
-                      onClick={() => {
-                        setIsStatusOpen(false)
-                        if (column.id !== currentColumnId) {
-                          void onStatusChange(column.id)
-                        }
-                      }}
-                    >
-                      <span
-                        className="priority-marker"
-                        style={{ '--priority-option-color': column.color || '#2563eb' } as CSSProperties}
-                        aria-hidden="true"
-                      />
-                      {column.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                <span>{t.common.status}</span>
+                <button
+                  className="status-check-trigger"
+                  type="button"
+                  role="checkbox"
+                  aria-checked={item.status}
+                  disabled={isSaving}
+                  onClick={() => void onStatusChange(item.status ? 0 : 1)}
+                >
+                  <span className="status-check-box" aria-hidden="true">
+                    {item.status ? '\u2713' : ''}
+                  </span>
+                  {item.status ? t.common.completed : t.common.pending}
+                </button>
+              </div>
+            ) : (
+              <div
+                className="status-property-card"
+                style={{ '--status-color': currentColumn?.color || '#2563eb' } as CSSProperties}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setIsStatusOpen(false)
+                  }
+                }}
+              >
+                <span>{t.common.status}</span>
+                <button
+                  className="priority-combo-trigger"
+                  type="button"
+                  onClick={() => setIsStatusOpen((current) => !current)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isStatusOpen}
+                  disabled={isSaving}
+                >
+                  {currentColumn?.name ?? t.itemDetails.statusFallback}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {isStatusOpen ? (
+                  <div className="priority-combo-menu" role="listbox">
+                    {columns.map((column) => (
+                      <button
+                        className={column.id === currentColumnId ? 'selected' : ''}
+                        type="button"
+                        role="option"
+                        aria-selected={column.id === currentColumnId}
+                        key={column.id}
+                        onClick={() => {
+                          setIsStatusOpen(false)
+                          if (column.id !== currentColumnId) {
+                            void onStatusChange(column.id)
+                          }
+                        }}
+                      >
+                        <span
+                          className="priority-marker"
+                          style={{ '--priority-option-color': column.color || '#2563eb' } as CSSProperties}
+                          aria-hidden="true"
+                        />
+                        {column.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {errorMessage ? <div className="feedback error" role="alert">{errorMessage}</div> : null}
