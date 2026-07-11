@@ -5,8 +5,8 @@ import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { ItemDetailsModal } from '../components/ItemDetailsModal'
 import { ItemModal } from '../components/ItemModal'
-import { KanbanSettingsModal } from '../components/KanbanSettingsModal'
 import { PageLoader } from '../components/PageLoader'
+import { SettingsModal } from '../components/SettingsModal'
 import { useI18n } from '../i18n'
 import { createItem, deleteItem, getItems, moveItem, updateItem, type Item, type Priority } from '../services/api/items'
 import { createList, deleteList, getLists, updateList, type KanbanList } from '../services/api/lists'
@@ -602,11 +602,9 @@ export function WorkspaceBoardPage() {
       </main>
 
       {isSettingsOpen && workspace ? (
-        <KanbanSettingsModal
+        <SettingsModal
           workspace={workspace}
-          columns={columns}
           errorMessage={settingsError}
-          isSaving={isSavingSettings}
           isSavingWorkspace={isSavingSettings || isSavingViewMode}
           onClose={() => {
             setIsSettingsOpen(false)
@@ -614,13 +612,17 @@ export function WorkspaceBoardPage() {
           }}
           onToggleKanbanMode={handleViewModeChange}
           onDeleteWorkspace={() => setIsConfirmingWorkspaceDeletion(true)}
-          onCreate={handleCreateColumn}
-          onUpdate={handleUpdateColumn}
-          onDelete={(column) => {
-            const boardColumn = columns.find((current) => current.id === column.id)
-            if (boardColumn) setColumnPendingDeletion(boardColumn)
+          columnSettings={{
+            columns,
+            isSaving: isSavingSettings,
+            onCreate: handleCreateColumn,
+            onUpdate: handleUpdateColumn,
+            onDelete: (column) => {
+              const boardColumn = columns.find((current) => current.id === column.id)
+              if (boardColumn) setColumnPendingDeletion(boardColumn)
+            },
+            onReorder: handleReorderColumns,
           }}
-          onReorder={handleReorderColumns}
         />
       ) : null}
 

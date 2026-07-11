@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { ListModal } from '../components/ListModal'
 import { PageLoader } from '../components/PageLoader'
+import { SettingsModal } from '../components/SettingsModal'
 import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
 import { createList, getLists, updateList, type KanbanList } from '../services/api/lists'
-import { getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
+import { deleteWorkspace, getWorkspace, updateWorkspace, type Workspace } from '../services/api/workspaces'
 import '../styles/lists.css'
 
 export function ListsPage() {
@@ -29,6 +31,10 @@ export function ListsPage() {
   const [isSavingWorkspaceName, setIsSavingWorkspaceName] = useState(false)
   const [workspaceNameError, setWorkspaceNameError] = useState<string | null>(null)
   const [isSavingViewMode, setIsSavingViewMode] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [isConfirmingWorkspaceDeletion, setIsConfirmingWorkspaceDeletion] = useState(false)
 
   useEffect(() => {
     if (!isValidWorkspaceId) {
@@ -157,10 +163,12 @@ export function ListsPage() {
   }
 
   async function handleViewModeChange() {
-    if (!workspace || isSavingViewMode) return
+    if (!workspace || isSavingViewMode || isSavingSettings) return
     const isKanbanViewMode = !workspace.isKanbanViewMode
     setIsSavingViewMode(true)
+    setIsSavingSettings(true)
     setWorkspaceNameError(null)
+    setSettingsError(null)
 
     try {
       const updatedWorkspace = await updateWorkspace(workspace.id, {
@@ -174,8 +182,27 @@ export function ListsPage() {
       }
     } catch {
       setWorkspaceNameError(t.lists.toggleViewError)
+      setSettingsError(t.lists.toggleViewError)
     } finally {
       setIsSavingViewMode(false)
+      setIsSavingSettings(false)
+    }
+  }
+
+  async function handleDeleteWorkspace() {
+    if (!workspace || isSavingSettings) return
+
+    setIsSavingSettings(true)
+    setSettingsError(null)
+
+    try {
+      await deleteWorkspace(workspace.id)
+      setIsConfirmingWorkspaceDeletion(false)
+      navigate('/workspaces', { replace: true })
+    } catch {
+      setSettingsError(t.kanbanSettings.deleteWorkspaceError)
+    } finally {
+      setIsSavingSettings(false)
     }
   }
 
@@ -248,7 +275,7 @@ export function ListsPage() {
                 role="switch"
                 aria-checked={Boolean(workspace?.isKanbanViewMode)}
                 aria-label={t.workspaceModal.toggleKanban}
-                disabled={!workspace || isSavingViewMode}
+                disabled={!workspace || isSavingViewMode || isSavingSettings}
                 onClick={() => void handleViewModeChange()}
               >
                 <span className="theme-switch-thumb" aria-hidden="true" />
@@ -261,6 +288,22 @@ export function ListsPage() {
               onClick={openCreateModal}
             >
               {t.common.createList}
+            </button>
+            <button
+              className="list-settings-button"
+              type="button"
+              aria-label={t.kanbanSettings.title}
+              title={t.kanbanSettings.title}
+              disabled={!workspace}
+              onClick={() => {
+                setIsSettingsOpen(true)
+                setSettingsError(null)
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.55 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.55a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.45 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.37.33.71.6 1 .3.28.7.43 1.1.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
+              </svg>
             </button>
           </div>
         </div>
@@ -332,6 +375,33 @@ export function ListsPage() {
           errorMessage={saveError}
           onClose={closeModal}
           onSubmit={handleSaveList}
+        />
+      ) : null}
+
+      {isSettingsOpen && workspace ? (
+        <SettingsModal
+          workspace={workspace}
+          errorMessage={settingsError}
+          isSavingWorkspace={isSavingSettings || isSavingViewMode}
+          onClose={() => {
+            setIsSettingsOpen(false)
+            setSettingsError(null)
+            setIsConfirmingWorkspaceDeletion(false)
+          }}
+          onToggleKanbanMode={handleViewModeChange}
+          onDeleteWorkspace={() => setIsConfirmingWorkspaceDeletion(true)}
+        />
+      ) : null}
+
+      {workspace && isConfirmingWorkspaceDeletion ? (
+        <ConfirmModal
+          title={t.kanbanSettings.deleteWorkspaceTitle}
+          message={t.kanbanSettings.deleteWorkspaceMessage(workspace.name)}
+          isConfirming={isSavingSettings}
+          onCancel={() => {
+            if (!isSavingSettings) setIsConfirmingWorkspaceDeletion(false)
+          }}
+          onConfirm={() => void handleDeleteWorkspace()}
         />
       ) : null}
     </AuthenticatedLayout>

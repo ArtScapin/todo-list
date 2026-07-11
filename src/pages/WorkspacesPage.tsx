@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AuthenticatedLayout } from '../components/AuthenticatedLayout'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { SettingsModal } from '../components/SettingsModal'
 import { WorkspaceModal } from '../components/WorkspaceModal'
 import { useI18n } from '../i18n'
 import { ApiError } from '../services/api/api'
 import {
   createWorkspace,
+  deleteWorkspace,
   getWorkspaces,
+  updateWorkspace,
   type Workspace,
 } from '../services/api/workspaces'
 
@@ -18,6 +22,10 @@ export function WorkspacesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [workspaceSettings, setWorkspaceSettings] = useState<Workspace | null>(null)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [isConfirmingWorkspaceDeletion, setIsConfirmingWorkspaceDeletion] = useState(false)
   const [searchValue, setSearchValue] = useState('')
 
   const loadWorkspaces = useCallback(async (signal?: AbortSignal) => {
@@ -85,6 +93,46 @@ export function WorkspacesPage() {
     }
   }
 
+  async function handleToggleWorkspaceMode() {
+    if (!workspaceSettings || isSavingSettings) return
+
+    setIsSavingSettings(true)
+    setSettingsError(null)
+
+    try {
+      const updatedWorkspace = await updateWorkspace(workspaceSettings.id, {
+        name: workspaceSettings.name,
+        isKanbanViewMode: !workspaceSettings.isKanbanViewMode,
+      })
+      setWorkspaceSettings(updatedWorkspace)
+      setWorkspaces((current) => current.map((workspace) => (
+        workspace.id === updatedWorkspace.id ? updatedWorkspace : workspace
+      )))
+    } catch {
+      setSettingsError(t.lists.toggleViewError)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
+  async function handleDeleteWorkspace() {
+    if (!workspaceSettings || isSavingSettings) return
+
+    setIsSavingSettings(true)
+    setSettingsError(null)
+
+    try {
+      await deleteWorkspace(workspaceSettings.id)
+      setWorkspaces((current) => current.filter((workspace) => workspace.id !== workspaceSettings.id))
+      setIsConfirmingWorkspaceDeletion(false)
+      setWorkspaceSettings(null)
+    } catch {
+      setSettingsError(t.kanbanSettings.deleteWorkspaceError)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
   const filteredWorkspaces = workspaces.filter((workspace) =>
     workspace.name.toLocaleLowerCase().includes(searchValue.trim().toLocaleLowerCase()),
   )
@@ -135,15 +183,31 @@ export function WorkspacesPage() {
         {!isLoading && !loadError && filteredWorkspaces.length > 0 ? (
           <section className="workspace-grid" aria-label={t.workspaces.gridLabel}>
             {filteredWorkspaces.map((workspace) => (
-              <Link
-                className="workspace-card"
-                key={workspace.id}
-                to={`/workspaces/${workspace.id}/${workspace.isKanbanViewMode ? 'board' : 'lists'}`}
-              >
-                <span className="workspace-icon" aria-hidden="true">W</span>
-                <h2>{workspace.name}</h2>
-                <p>{workspace.isKanbanViewMode ? t.common.kanban : t.common.listMode}</p>
-              </Link>
+              <article className="workspace-card" key={workspace.id}>
+                <Link
+                  className="workspace-card-link"
+                  to={`/workspaces/${workspace.id}/${workspace.isKanbanViewMode ? 'board' : 'lists'}`}
+                >
+                  <span className="workspace-icon" aria-hidden="true">W</span>
+                  <h2>{workspace.name}</h2>
+                  <p>{workspace.isKanbanViewMode ? t.common.kanban : t.common.listMode}</p>
+                </Link>
+                <button
+                  className="workspace-card-settings"
+                  type="button"
+                  aria-label={t.kanbanSettings.workspaceSubtitle(workspace.name)}
+                  title={t.kanbanSettings.title}
+                  onClick={() => {
+                    setWorkspaceSettings(workspace)
+                    setSettingsError(null)
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.55 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.55a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.45 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.12.37.33.71.6 1 .3.28.7.43 1.1.4H21v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
+                  </svg>
+                </button>
+              </article>
             ))}
           </section>
         ) : null}
@@ -156,6 +220,33 @@ export function WorkspacesPage() {
           errorMessage={saveError}
           onClose={closeModal}
           onSubmit={handleCreateWorkspace}
+        />
+      ) : null}
+
+      {workspaceSettings ? (
+        <SettingsModal
+          workspace={workspaceSettings}
+          errorMessage={settingsError}
+          isSavingWorkspace={isSavingSettings}
+          onClose={() => {
+            setWorkspaceSettings(null)
+            setSettingsError(null)
+            setIsConfirmingWorkspaceDeletion(false)
+          }}
+          onToggleKanbanMode={handleToggleWorkspaceMode}
+          onDeleteWorkspace={() => setIsConfirmingWorkspaceDeletion(true)}
+        />
+      ) : null}
+
+      {workspaceSettings && isConfirmingWorkspaceDeletion ? (
+        <ConfirmModal
+          title={t.kanbanSettings.deleteWorkspaceTitle}
+          message={t.kanbanSettings.deleteWorkspaceMessage(workspaceSettings.name)}
+          isConfirming={isSavingSettings}
+          onCancel={() => {
+            if (!isSavingSettings) setIsConfirmingWorkspaceDeletion(false)
+          }}
+          onConfirm={() => void handleDeleteWorkspace()}
         />
       ) : null}
     </AuthenticatedLayout>
