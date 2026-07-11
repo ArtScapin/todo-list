@@ -32,6 +32,7 @@
 }
 
 .lists-heading {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -50,7 +51,17 @@
   gap: 10px;
 }
 
+.lists-heading-actions {
+  flex: 0 0 auto;
+}
+
+.lists-heading-actions .primary-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .view-mode-control {
+  flex: 0 0 auto;
   padding: 8px 11px;
   border: 1px solid var(--border-color);
   border-radius: 10px;
